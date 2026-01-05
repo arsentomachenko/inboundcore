@@ -55,21 +55,6 @@ router.get('/:callControlId', async (req, res) => {
       });
     }
     
-    // Fetch recording information
-    try {
-      const recordingResult = await query(
-        `SELECT * FROM call_recordings WHERE call_control_id = $1`,
-        [callControlId]
-      );
-      
-      if (recordingResult.rows.length > 0) {
-        conversation.recording = recordingResult.rows[0];
-      }
-    } catch (error) {
-      console.error('Error fetching recording:', error);
-      // Don't fail the request if recording fetch fails
-    }
-    
     res.json({
       success: true,
       conversation
@@ -83,38 +68,6 @@ router.get('/:callControlId', async (req, res) => {
   }
 });
 
-/**
- * GET /api/conversations/:callControlId/recording
- * Get recording for a specific conversation
- */
-router.get('/:callControlId/recording', async (req, res) => {
-  try {
-    const { callControlId } = req.params;
-    
-    const result = await query(
-      `SELECT * FROM call_recordings WHERE call_control_id = $1`,
-      [callControlId]
-    );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Recording not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      recording: result.rows[0]
-    });
-  } catch (error) {
-    console.error('Error fetching recording:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
 
 /**
  * DELETE /api/conversations

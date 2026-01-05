@@ -352,7 +352,7 @@ class ConversationService {
       let whereClause = '';
       const conditions = [];
       
-      // Build conditions for WHERE clause (must use table alias 'c' since we're joining with call_recordings)
+      // Build conditions for WHERE clause
       const countConditions = [];
       
       // Apply filter
@@ -412,11 +412,8 @@ class ConversationService {
           c.id, c.call_control_id as "callControlId", c.from_number as "fromNumber", 
           c.to_number as "toNumber", c.start_time as "startTime", c.end_time as "endTime",
           c.duration, c.cost, c.model, c.messages, c.status, c.cost_breakdown as "costBreakdown",
-          c.hangup_cause as "hangupCause", c.created_at as "createdAt",
-          r.recording_url as "recordingUrl", r.status as "recordingStatus",
-          r.duration_seconds as "recordingDuration", r.recording_started_at as "recordingStartedAt"
+          c.hangup_cause as "hangupCause", c.created_at as "createdAt"
         FROM conversations c
-        LEFT JOIN call_recordings r ON c.call_control_id = r.call_control_id
         ${whereClause}
         ORDER BY c.start_time DESC
         LIMIT $1 OFFSET $2`,
@@ -432,16 +429,6 @@ class ConversationService {
           messages: row.messages || [],
           costBreakdown: row.costBreakdown || {}
         };
-        
-        // Add recording info if available
-        if (row.recordingUrl || row.recordingStatus) {
-          conversation.recording = {
-            recording_url: row.recordingUrl,
-            status: row.recordingStatus,
-            duration_seconds: row.recordingDuration,
-            recording_started_at: row.recordingStartedAt
-          };
-        }
         
         return conversation;
       });

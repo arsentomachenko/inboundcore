@@ -465,6 +465,9 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       const askedVerification = /your last name is.*and you're (over in|in)/i.test(lastAssistantText);
       const askedAlzheimers = /alzheimer|dementia/i.test(lastAssistantText);
       const askedHospice = /hospice|nursing home/i.test(lastAssistantText);
+      
+      // Pattern 3b: User says "at home" in response to hospice question (handles STT errors like "Though I'm at home")
+      const hasAtHomeResponse = askedHospice && /\b(at home|home|living at home|not in hospice|not in nursing)\b/i.test(transcript);
       const askedAge = /between.*50.*78|how old are you/i.test(lastAssistantText);
       const askedBankAccount = /checking|savings|bank account/i.test(lastAssistantText);
       const askedTransfer = /get you connected|speak with.*agent|transfer|sound good/i.test(lastAssistantText);
@@ -497,11 +500,14 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       }
       
       // 🔥 FORCE function call if user is answering a qualification question (but NOT the health issue question)
-      if ((isYesNoAnswer || isAgeAnswer || hasAgeInResponse || hasBankInResponse) && askedQualificationQuestion && !askedHealthIssue) {
+      if ((isYesNoAnswer || isAgeAnswer || hasAgeInResponse || hasBankInResponse || hasAtHomeResponse) && askedQualificationQuestion && !askedHealthIssue) {
         toolChoice = 'required';
         console.log('🎯 FORCING function call - user answering qualification question');
         console.log(`   User said: "${transcript}"`);
         console.log(`   AI asked about: ${askedVerification ? 'verification' : askedAlzheimers ? 'alzheimers' : askedHospice ? 'hospice' : askedAge ? 'age' : askedBankAccount ? 'bank account' : 'transfer'}`);
+        if (hasAtHomeResponse) {
+          console.log(`   ✅ Detected "at home" response to hospice question - treating as "no" answer`);
+        }
       }
       
       // ❌ DO NOT force function call for "I don't want" - AI must ask agent question first per prompt
@@ -521,7 +527,7 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       // This catches cases where AI might skip function calls during qualification flow
       // BUT ONLY if the user's transcript actually looks like an answer!
       // 🚨 CRITICAL: Exclude health issue question - it's NOT a qualification question!
-      const looksLikeAnswer = isYesNoAnswer || isAgeAnswer || hasAgeInResponse || hasBankInResponse;
+      const looksLikeAnswer = isYesNoAnswer || isAgeAnswer || hasAgeInResponse || hasBankInResponse || hasAtHomeResponse;
       
       if (hasUnansweredQualifications && state.qualifications.verified_info === true && askedQualificationQuestion && looksLikeAnswer && !askedHealthIssue) {
         if (toolChoice !== 'required') {
@@ -619,7 +625,30 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
           console.log(`Call outcome: ${functionArgs.outcome}`, functionArgs.reason || '');
           
           if (functionArgs.outcome === 'transfer_to_agent') {
-            shouldTransfer = true;
+            // 🔥 CRITICAL: Check if user is fully qualified before allowing transfer
+            const quals = state.qualifications;
+            const isFullyQualified = quals.verified_info === true && 
+                                     quals.no_alzheimers === true && 
+                                     quals.no_hospice === true && 
+                                     quals.age_qualified === true && 
+                                     quals.has_bank_account === true;
+            
+            if (!isFullyQualified) {
+              console.log('⚠️  AI attempted transfer but user is NOT fully qualified - blocking transfer');
+              console.log(`   Qualifications: verified=${quals.verified_info}, alzheimers=${quals.no_alzheimers}, hospice=${quals.no_hospice}, age=${quals.age_qualified}, bank=${quals.has_bank_account}`);
+              // Don't transfer - continue with qualification questions
+              // Regenerate response to ask the missing qualification question
+              const nextQuestion = this._getNextQuestion(state);
+              if (nextQuestion) {
+                assistantResponse = nextQuestion;
+                console.log('   ✅ Regenerated response to ask missing qualification question');
+              } else {
+                assistantResponse = `Got it, thanks!`;
+              }
+              // Don't set shouldTransfer = true - will continue asking questions
+            } else {
+              shouldTransfer = true;
+            }
           } else {
             shouldHangup = true;
           }
@@ -657,7 +686,30 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
           console.log(`Call outcome: ${functionArgs.outcome}`, functionArgs.reason || '');
           
           if (functionArgs.outcome === 'transfer_to_agent') {
-            shouldTransfer = true;
+            // 🔥 CRITICAL: Check if user is fully qualified before allowing transfer
+            const quals = state.qualifications;
+            const isFullyQualified = quals.verified_info === true && 
+                                     quals.no_alzheimers === true && 
+                                     quals.no_hospice === true && 
+                                     quals.age_qualified === true && 
+                                     quals.has_bank_account === true;
+            
+            if (!isFullyQualified) {
+              console.log('⚠️  AI attempted transfer but user is NOT fully qualified - blocking transfer');
+              console.log(`   Qualifications: verified=${quals.verified_info}, alzheimers=${quals.no_alzheimers}, hospice=${quals.no_hospice}, age=${quals.age_qualified}, bank=${quals.has_bank_account}`);
+              // Don't transfer - continue with qualification questions
+              // Regenerate response to ask the missing qualification question
+              const nextQuestion = this._getNextQuestion(state);
+              if (nextQuestion) {
+                assistantResponse = nextQuestion;
+                console.log('   ✅ Regenerated response to ask missing qualification question');
+              } else {
+                assistantResponse = `Got it, thanks!`;
+              }
+              // Don't set shouldTransfer = true - will continue asking questions
+            } else {
+              shouldTransfer = true;
+            }
           } else {
             shouldHangup = true;
           }
@@ -692,13 +744,38 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       const hasProgressedPastGreeting = state.stage !== 'greeting' && state.messages.length > 1;
       const bankAccountAnswered = quals.has_bank_account === true;
       
-      if (isFullyQualified && !shouldHangup && !shouldTransfer && hasProgressedPastGreeting && bankAccountAnswered) {
-        // User is fully qualified - force transfer
-        console.log('✅ Full qualification detected - forcing transfer');
+      // 🔧 FIX: Check if AI just asked "Sound good?" - if so, wait for user's response before transferring
+      const lastAIMessage = [...state.messages].reverse().find(m => m.role === 'assistant');
+      const lastAIText = (lastAIMessage?.content || '').toLowerCase();
+      const justAskedSoundGood = /sound good/i.test(lastAIText) && /get you connected|licensed agent/i.test(lastAIText);
+      
+      // 🔧 FIX: Detect user's response to "Sound good?" question
+      if (justAskedSoundGood && isFullyQualified && userTranscript) {
+        const transcriptLower = userTranscript.toLowerCase().trim();
+        const userSaidYes = /^(yes|yeah|yep|yup|yess|yea|sure|okay|ok|sounds good|sounds great|that sounds good|that sounds great|that's good|that's great)\b/i.test(transcriptLower);
+        const userSaidNo = /^(no|nope|nah|naw|not yet|not right now|maybe later|not interested|i don't want|i don't need)\b/i.test(transcriptLower);
+        
+        if (userSaidYes && !shouldTransfer) {
+          // User confirmed transfer - set shouldTransfer so AI can confirm and then transfer
+          console.log('✅ User confirmed transfer after "Sound good?" - setting shouldTransfer');
+          shouldTransfer = true;
+        } else if (userSaidNo && !shouldHangup) {
+          // User declined transfer - set shouldHangup so AI can say goodbye
+          console.log('✅ User declined transfer after "Sound good?" - setting shouldHangup');
+          shouldHangup = true;
+        }
+      }
+      
+      if (isFullyQualified && !shouldHangup && !shouldTransfer && hasProgressedPastGreeting && bankAccountAnswered && !justAskedSoundGood) {
+        // User is fully qualified and AI hasn't asked "Sound good?" yet - ask for confirmation
+        console.log('✅ Full qualification detected - will ask for transfer confirmation');
         console.log(`   Qualifications: verified=${quals.verified_info}, alzheimers=${quals.no_alzheimers}, hospice=${quals.no_hospice}, age=${quals.age_qualified}, bank=${quals.has_bank_account}`);
         console.log(`   Conversation stage: ${state.stage}, Messages: ${state.messages.length}`);
-        shouldTransfer = true;
-      } else if (isFullyQualified && !shouldTransfer) {
+        // DON'T set shouldTransfer = true yet - wait for user's response to "Sound good?"
+      } else if (isFullyQualified && justAskedSoundGood && !shouldTransfer && !shouldHangup) {
+        // AI just asked "Sound good?" - waiting for user's response (handled above)
+        console.log('⏳ Waiting for user response to "Sound good?" question');
+      } else if (isFullyQualified && !shouldTransfer && !justAskedSoundGood) {
         // Log when user is qualified but transfer wasn't triggered (for debugging)
         console.log('⚠️  User is fully qualified but transfer not triggered');
         console.log(`   Qualifications: verified=${quals.verified_info}, alzheimers=${quals.no_alzheimers}, hospice=${quals.no_hospice}, age=${quals.age_qualified}, bank=${quals.has_bank_account}`);
@@ -783,7 +860,7 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
           }
         } else if (functionName === 'set_call_outcome') {
           if (functionArgs.outcome === 'transfer_to_agent') {
-            assistantResponse = `Awesome! I'm transferring you now. Just a moment.`;
+            assistantResponse = `Great! Just a minute, I will connect you to a licensed agent.`;
           } else {
             assistantResponse = `I understand. No problem at all. Have a great day!`;
           }
@@ -823,14 +900,23 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
             manuallyUpdated = true;
           }
         } else if (/hospice|nursing home/i.test(lastAssistantText)) {
-          // Hospice question
-          if (/^(no|nope|nah|naw)\b/i.test(transcript)) {
+          // Hospice question - improved to catch "no, I mean at home" type answers
+          // Check for "at home" anywhere in response (handles STT errors like "Though I'm at home")
+          const hasAtHome = /\b(at home|home|living at home|not in hospice|not in nursing)\b/i.test(transcript);
+          const startsWithNo = /^(no|nope|nah|naw)\b/i.test(transcript);
+          const hasNoAtStart = /^no[,.]?\s*(i mean|i'm|im|i am|we are|we're)\s*(at home|home|living at home|not in hospice|not in nursing)/i.test(transcript);
+          const startsWithImAtHome = /^(i'm|im|i am|we are|we're)\s*(at home|home|living at home|not in hospice|not in nursing)/i.test(transcript);
+          const hasNoWithLocation = /^(no|nope|nah|naw)[,.]?\s*(i|we)\s*(mean|live|are|stay)\s*(at home|home)/i.test(transcript);
+          
+          if (startsWithNo || hasNoAtStart || startsWithImAtHome || hasNoWithLocation || hasAtHome) {
             state.qualifications.no_hospice = true;
-            console.log('   ✅ Manually set no_hospice = true');
+            console.log('   ✅ Manually set no_hospice = true (detected "no" or "at home" response)');
+            console.log(`   📝 Transcript: "${transcript}" - matched pattern: ${startsWithNo ? 'startsWithNo' : hasNoAtStart ? 'hasNoAtStart' : startsWithImAtHome ? 'startsWithImAtHome' : hasNoWithLocation ? 'hasNoWithLocation' : 'hasAtHome'}`);
             manuallyUpdated = true;
-          } else if (/^(yes|yeah|yep|yup|yess|yea|absolutely|definitely|i have|i do)\b/i.test(transcript)) {
+          } else if (/^(yes|yeah|yep|yup|yess|yea|absolutely|definitely|i have|i do|i am|i'm in|we are in|we're in)\b/i.test(transcript) ||
+                     /^(yes|yeah|yep|yup|yess|yea)[,.]?\s*(i|we)\s*(am|are|have|do)\s*(in hospice|in nursing)/i.test(transcript)) {
             state.qualifications.no_hospice = false;
-            console.log('   ✅ Manually set no_hospice = false');
+            console.log('   ✅ Manually set no_hospice = false (detected "yes" to hospice/nursing home)');
             manuallyUpdated = true;
           }
         } else if (/between.*50.*78|how old are you/i.test(lastAssistantText)) {
@@ -928,6 +1014,27 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       const connectingPhrase = responseL.includes('get you connected') && 
                               !responseL.includes('sound good') && 
                               !responseL.includes('?');
+      
+      // 🔧 FIX: Handle user's confirmation response to "Sound good?" question
+      // Re-check if AI just asked "Sound good?" (in case assistant response changed)
+      const lastAIMessageAfter = [...state.messages].reverse().find(m => m.role === 'assistant');
+      const lastAITextAfter = (lastAIMessageAfter?.content || '').toLowerCase();
+      const justAskedSoundGoodAfter = /sound good/i.test(lastAITextAfter) && /get you connected|licensed agent/i.test(lastAITextAfter);
+      
+      // If user confirmed transfer (shouldTransfer was set above), generate/override confirmation response
+      if (shouldTransfer && justAskedSoundGoodAfter) {
+        // User confirmed transfer - generate confirmation message (override if AI didn't generate appropriate one)
+        if (!assistantResponse || !assistantResponse.toLowerCase().includes('connect') && !assistantResponse.toLowerCase().includes('transfer')) {
+          assistantResponse = `Great! Just a minute, I will connect you to a licensed agent.`;
+          console.log('✅ User confirmed transfer - generating confirmation response');
+        }
+      } else if (shouldHangup && justAskedSoundGoodAfter) {
+        // User declined transfer - generate goodbye message (override if AI didn't generate appropriate one)
+        if (!assistantResponse || !assistantResponse.toLowerCase().includes('good day') && !assistantResponse.toLowerCase().includes('bye')) {
+          assistantResponse = `Got it, I understand. You can call with a licensed agent anytime. Have a good day. Bye!`;
+          console.log('✅ User declined transfer - generating goodbye response');
+        }
+      }
       
       if ((saysExplicitTransfer || connectingPhrase) && !shouldTransfer && !shouldHangup) {
         // Check if user is fully qualified - if so, trigger transfer instead of hangup

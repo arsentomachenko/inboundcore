@@ -146,14 +146,6 @@ router.post('/telnyx', async (req, res) => {
         console.log(`🎙️  Streaming stopped for call: ${event?.payload?.call_control_id || 'unknown'}`);
         break;
 
-      case 'call.recording.saved':
-        await handleRecordingSaved(event);
-        break;
-
-      case 'call.recording.failed':
-        await handleRecordingFailed(event);
-        break;
-
       default:
         console.log(`⚠️  Unhandled event type: ${eventType}`);
     }
@@ -299,20 +291,6 @@ async function handleCallAnswered(event) {
   // Mark call as connected for accurate cost tracking
   // Telnyx only charges for connected time, not ringing time
   costTracking.markCallConnected(callControlId);
-
-  // Start recording for all calls
-  try {
-    console.log(`🎙️  Attempting to start recording for call: ${callControlId}`);
-    const recordingResult = await telnyxService.startRecording(callControlId);
-    if (recordingResult) {
-      console.log(`✅ Recording start command sent successfully for: ${callControlId}`);
-    } else {
-      console.warn(`⚠️  Recording start returned null for: ${callControlId} (may have failed silently)`);
-    }
-  } catch (error) {
-    console.error('⚠️  Failed to start recording (continuing anyway):', error.message);
-    console.error('   Stack:', error.stack);
-  }
   
   try {
     // Check if this call was already bridged (bridged event comes before answered)
@@ -481,11 +459,11 @@ async function handleCallAnswered(event) {
       console.log(`✅ Greetings sent successfully via bidirectional streaming!`);
       
       // Calculate estimated audio playback duration for both greetings
-      // Use same calculation as TTS service: 80ms per character (0.08 sec/char)
+      // ⭐ REDUCED: Use faster estimate (35ms per character, was 50ms)
       // Add extra buffer for: network latency, Telnyx buffering, and audio streaming delays
       const totalGreetingText = firstGreeting + ' ' + secondGreeting;
-      const estimatedDurationMs = Math.max(3000, (totalGreetingText.length * 80)); // 80ms per character (matches TTS service)
-      const waitTime = estimatedDurationMs + 3000; // Add 3 second safety buffer for network/buffering
+      const estimatedDurationMs = Math.max(1000, (totalGreetingText.length * 35)); // ⭐ REDUCED: 35ms per character (was 50ms), min 1s (was 2s)
+      const waitTime = estimatedDurationMs + 1000; // ⭐ REDUCED: 1 second safety buffer (was 2s)
       
       console.log(`   Estimated audio duration: ${estimatedDurationMs.toFixed(0)}ms (${totalGreetingText.length} chars)`);
       
@@ -619,28 +597,11 @@ async function handleCallBridged(event) {
     transferredCalls.push(transferredCallData);
     console.log(`✅ Tracked transferred call: ${userInfo.firstname} ${userInfo.lastname} (${userInfo.phone})`);
     
-    // Save to database
-    const { query } = require('../config/database');
-    try {
-      await query(
-        `INSERT INTO transferred_calls (
-          call_control_id, user_id, phone, name, address, from_number, to_number, transferred_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-        ON CONFLICT (call_control_id) DO NOTHING`,
-        [
-          callControlId,
-          userInfo.id || null,
-          transferredCallData.phone,
-          transferredCallData.name,
-          transferredCallData.address || null,
-          transferredCallData.fromNumber,
-          transferredCallData.toNumber
-        ]
-      );
-      console.log(`💾 Transferred call saved to database: ${callControlId}`);
-    } catch (error) {
-      console.error('❌ Error saving transferred call to database:', error.message);
-    }
+    // ⚠️ REMOVED: Database tracking of transfer calls
+    // Transfer calls are temporary bridge calls between lead and agent
+    // The original lead call already tracks transfer status in conversations table
+    // No need to create separate database records for bridge calls
+    // console.log(`💾 Transferred call saved to database: ${callControlId}`); // REMOVED
   }
   
   // Broadcast to frontend
@@ -1029,10 +990,30 @@ async function handleCallHangup(event) {
   const callControlId = event.payload.call_control_id;
   const hangupCause = event.payload.hangup_cause;
   
+  // 🔧 FIX: Check if this is a transfer call BEFORE attempting recovery
+  // Transfer calls should never be saved to conversation history
+  const transferNumber = agentConfig.transferNumber || process.env.AGENT_TRANSFER_NUMBER;
+  let isTransferCall = transferCalls.has(callControlId);
+  
+  // Also check by destination number if not already marked
+  if (!isTransferCall && transferNumber) {
+    const toNumber = event.payload.to;
+    if (toNumber) {
+      const normalizedTo = toNumber.replace(/\s/g, '').replace(/^\+?1?/, '');
+      const normalizedTransfer = transferNumber.replace(/\s/g, '').replace(/^\+?1?/, '');
+      if (normalizedTo === normalizedTransfer || toNumber === transferNumber) {
+        isTransferCall = true;
+        transferCalls.add(callControlId);
+        console.log(`🔗 Transfer call detected by destination number in hangup: ${toNumber}`);
+      }
+    }
+  }
+  
   // ⚠️ FIX: Ensure conversation was initialized even if call never answered
   // This can happen if the call.initiated webhook never arrived or was delayed
+  // BUT skip for transfer calls - they should never be in conversation history
   let conversation = conversationService.activeConversations?.get?.(callControlId);
-  if (!conversation) {
+  if (!conversation && !isTransferCall) {
     // Try to get numbers from telnyx_calls or client_state to initialize
     console.log(`⚠️  Call hangup received but no conversation found for ${callControlId} - attempting to recover`);
     try {
@@ -1057,10 +1038,13 @@ async function handleCallHangup(event) {
     } catch (error) {
       console.error(`   ⚠️  Could not recover conversation: ${error.message}`);
     }
+  } else if (isTransferCall) {
+    console.log(`🔗 Transfer call detected - skipping conversation recovery`);
   }
   
   // Skip processing for transfer calls (they're just bridge calls, no conversation)
-  if (transferCalls.has(callControlId)) {
+  // Use isTransferCall from above check OR check transferCalls map
+  if (isTransferCall || transferCalls.has(callControlId)) {
     console.log(`📵 Transfer call ended: ${callControlId} (${hangupCause}) - skipping conversation processing`);
     
     // ⭐ FIX: Log transfer call duration to diagnose premature endings
@@ -1082,12 +1066,20 @@ async function handleCallHangup(event) {
     }
     
     stopSilenceDetection(callControlId);
-    // Still finalize cost tracking for transfer calls
+    // 🔧 FIX: Only finalize cost tracking for transfer calls - DO NOT save to conversation history
+    // Transfer calls are temporary bridge calls - only the lead outbound call should be in conversation history
     try {
       const finalCost = await costTracking.finalizeCallCost(callControlId, false);
-      await conversationService.finalizeConversation(callControlId, finalCost, false, 'transferred');
+      console.log(`💰 Final call cost: $${finalCost.total.toFixed(4)}`);
+      console.log(`   Telnyx: $${finalCost.telnyx.toFixed(4)} (${finalCost.telnyxMinutes} min)`);
+      console.log(`   ElevenLabs: $${finalCost.elevenLabs.toFixed(4)}`);
+      console.log(`   OpenAI: $${finalCost.openai.toFixed(4)} (${finalCost.openaiCalls} calls)`);
+      await costTracking.saveCallCost(callControlId, finalCost);
+      console.log(`💾 Saved cost to database: ${callControlId}`);
+      // ⚠️ REMOVED: conversationService.finalizeConversation() - transfer calls should NOT be in conversation history
+      console.log(`ℹ️  Transfer call - NOT saving to conversation history (only lead calls are saved)`);
     } catch (error) {
-      console.error('Error finalizing transfer call:', error);
+      console.error('Error finalizing transfer call cost:', error);
     }
     return;
   }
@@ -1355,14 +1347,6 @@ async function handleCallHangup(event) {
     console.error(`   ❌ Error closing websockets:`, error);
   }
   
-  // Stop recording when call ends
-  try {
-    await telnyxService.stopRecording(callControlId);
-    console.log(`   ✅ Stopped recording for ${callControlId}`);
-  } catch (error) {
-    console.error(`   ⚠️  Error stopping recording (may already be stopped):`, error.message);
-  }
-
   // Cancel any active TTS requests
   try {
     bidirectionalTTS.cancel(callControlId);
@@ -1759,18 +1743,42 @@ async function handleTranscription(event) {
     speakingState = speakingCalls.get(callControlId);
     const isGenerating = speakingState && speakingState.generating;
     
-    // Check if speech should have ended by now (concurrent call fix)
-    if (speakingState.expectedEndTime && Date.now() >= speakingState.expectedEndTime) {
+    // ⭐ CRITICAL FIX: Check if actual audio duration has passed (ignoring buffer)
+    // This allows responses immediately after audio finishes playing, not after buffer expires
+    if (speakingState.actualDurationMs && speakingState.audioSentTime && !isGenerating) {
+      const timeSinceAudioSent = Date.now() - speakingState.audioSentTime;
+      if (timeSinceAudioSent >= speakingState.actualDurationMs) {
+        // Actual audio duration has passed - audio should have finished playing
+        console.log(`   ⏰ Actual audio duration passed (${(timeSinceAudioSent/1000).toFixed(2)}s since sent, ${(speakingState.actualDurationMs/1000).toFixed(2)}s duration) - allowing response`);
+        speakingCalls.delete(callControlId);
+        isSpeaking = false; // Allow transcription to be processed
+      } else {
+        // ⭐ AGGRESSIVE: Allow responses when we're past 60% of audio duration (audio is mostly done)
+        // This prevents false overlapping detection when user responds near the end of AI speech
+        // 🔧 FIX: Reduced threshold from 70% to 60% to allow responses sooner
+        const audioProgress = timeSinceAudioSent / speakingState.actualDurationMs;
+        const timeUntilAudioEnds = speakingState.actualDurationMs - timeSinceAudioSent;
+        
+        if (audioProgress >= 0.6 || timeUntilAudioEnds <= 1500) {
+          // Past 60% of audio OR within 1.5 seconds of ending - allow response
+          console.log(`   ⏰ Audio ${(audioProgress * 100).toFixed(0)}% complete (${timeUntilAudioEnds.toFixed(0)}ms remaining) - allowing response early`);
+          isSpeaking = false; // Allow transcription to be processed
+        } else {
+          isSpeaking = true;
+        }
+      }
+    } else if (speakingState.expectedEndTime && Date.now() >= speakingState.expectedEndTime) {
       // Speech should have ended but speakingCalls wasn't cleared (setTimeout didn't fire in time)
       const timeSinceExpectedEnd = Date.now() - speakingState.expectedEndTime;
       console.log(`   ⏰ Speech expected end time passed (${timeSinceExpectedEnd}ms ago) - clearing speaking state (concurrent call fix)`);
       speakingCalls.delete(callControlId);
       isSpeaking = false; // Allow transcription to be processed
     } else if (speakingState.expectedEndTime && !isGenerating) {
-      // ⭐ NEW: If we're close to expectedEndTime (within 500ms), allow the response
+      // ⭐ FIX: Increase threshold significantly to allow responses much sooner
       // This handles cases where audio finished playing but setTimeout hasn't fired yet
+      // Since we use actual duration from PCMU buffer, we can be more aggressive
       const timeUntilExpectedEnd = speakingState.expectedEndTime - Date.now();
-      if (timeUntilExpectedEnd <= 500) {
+      if (timeUntilExpectedEnd <= 4000) { // ⭐ INCREASED to 4000ms (4 seconds before expected end) - very aggressive
         console.log(`   ⏰ Close to expected end time (${timeUntilExpectedEnd}ms remaining) - allowing response to prevent false overlapping detection`);
         isSpeaking = false; // Allow transcription to be processed
       } else {
@@ -2521,8 +2529,8 @@ async function handleTranscription(event) {
           
           // Try to speak the fallback
           const responseStartTime = Date.now();
-          const estimatedDurationMs = Math.max(3000, (fallbackResponse.length * 80));
-          const waitTime = estimatedDurationMs + 3000;
+          const estimatedDurationMs = Math.max(1000, (fallbackResponse.length * 35)); // ⭐ REDUCED: 35ms per character (was 50ms), min 1s (was 2s)
+          const waitTime = estimatedDurationMs + 1000; // ⭐ REDUCED: 1 second safety buffer (was 2s)
           const expectedEndTime = responseStartTime + waitTime;
           
           speakingCalls.set(callControlId, { 
@@ -2573,8 +2581,8 @@ async function handleTranscription(event) {
     // Update speaking state (now actually speaking, not generating)
     // 🔍 CRITICAL FIX FOR CONCURRENT CALLS: Store expectedEndTime for time-based checking
     const responseStartTime = Date.now();
-    const estimatedDurationMs = Math.max(3000, (aiResponse.response.length * 80)); // 80ms per character (matches TTS service)
-    const waitTime = estimatedDurationMs + 3000; // Add 3 second safety buffer for network/buffering
+    const estimatedDurationMs = Math.max(1000, (aiResponse.response.length * 35)); // ⭐ REDUCED: 35ms per character (was 50ms), min 1s (was 2s)
+    const waitTime = estimatedDurationMs + 1000; // ⭐ REDUCED: 1 second safety buffer (was 2s)
     const expectedEndTime = responseStartTime + waitTime;
     
     speakingCalls.set(callControlId, { 
@@ -2586,29 +2594,37 @@ async function handleTranscription(event) {
     // Silence detection removed
     
     try {
-      await bidirectionalTTS.speak(callControlId, aiResponse.response);
-      console.log(`✅ AI finished sending audio (bidirectional TTS)`);
+      const ttsResult = await bidirectionalTTS.speak(callControlId, aiResponse.response);
       
-      console.log(`   Estimated audio duration: ${estimatedDurationMs.toFixed(0)}ms (${aiResponse.response.length} chars)`);
-      
-      // ⭐ CRITICAL FIX: Update expectedEndTime based on when audio FINISHED sending
-      // The audio has been sent, so we can calculate a more accurate end time
-      const audioSentTime = Date.now();
-      const reducedBuffer = 1000; // Reduced from 3000ms to 1000ms since audio is already sent
-      const actualWaitTime = estimatedDurationMs + reducedBuffer;
-      const actualExpectedEndTime = audioSentTime + actualWaitTime;
-      
-      // Update the speaking state with more accurate expectedEndTime
-      if (speakingCalls.has(callControlId)) {
-        const currentState = speakingCalls.get(callControlId);
-        speakingCalls.set(callControlId, {
-          ...currentState,
-          expectedEndTime: actualExpectedEndTime
-        });
-        console.log(`   ⏰ Updated expected end time: ${new Date(actualExpectedEndTime).toISOString()} (based on audio sent time)`);
+      // Handle case where TTS was skipped (duplicate request or cancelled)
+      if (!ttsResult) {
+        console.log(`⚠️  TTS was skipped (duplicate or cancelled) - using fallback duration estimate`);
       }
       
-      console.log(`   ⏱️  Will clear speaking state after ${actualWaitTime.toFixed(0)}ms (audio playback + reduced buffer)`);
+      // ⭐ FIX: Use ACTUAL duration from TTS service instead of text-based estimate
+      const actualDurationMs = ttsResult?.actualDurationMs || Math.max(1000, (aiResponse.response.length * 30)); // ⭐ REDUCED: Fallback 30ms/char (was 45ms), min 1s (was 2s)
+      const reducedBuffer = 0; // ⭐ REMOVED buffer entirely - actual duration is very accurate, no buffer needed
+      const actualWaitTime = actualDurationMs + reducedBuffer;
+      const actualExpectedEndTime = Date.now() + actualWaitTime;
+      
+      console.log(`✅ AI finished sending audio (bidirectional TTS)`);
+      console.log(`   📊 ACTUAL audio duration: ${(actualDurationMs/1000).toFixed(2)}s (from PCMU buffer)`);
+      console.log(`   ⏱️  Wait time: ${actualWaitTime.toFixed(0)}ms (${(actualDurationMs/1000).toFixed(2)}s audio + ${reducedBuffer}ms buffer)`);
+      
+      // Update the speaking state with accurate expectedEndTime and actual duration
+      if (speakingCalls.has(callControlId)) {
+        const currentState = speakingCalls.get(callControlId);
+        const audioSentTime = Date.now();
+        speakingCalls.set(callControlId, {
+          ...currentState,
+          expectedEndTime: actualExpectedEndTime,
+          actualDurationMs: actualDurationMs, // Store actual duration for early response detection
+          audioSentTime: audioSentTime // Store when audio was sent
+        });
+        console.log(`   ⏰ Updated expected end time: ${new Date(actualExpectedEndTime).toISOString()} (based on ACTUAL audio duration)`);
+      }
+      
+      console.log(`   ⏱️  Will clear speaking state after ${actualWaitTime.toFixed(0)}ms (actual audio playback + reduced buffer)`);
       
       // 🔍 CRITICAL FIX: Clear speakingCalls after audio finishes playing
       // bidirectionalTTS.speak() returns when audio is SENT, not when it finishes PLAYING
@@ -2656,7 +2672,10 @@ async function handleTranscription(event) {
             }
           }
           
-          console.log(`📋 Scheduling transfer after ${waitTime.toFixed(0)}ms`);
+          // 🔧 FIX: Use actualWaitTime (actual audio duration) instead of waitTime (estimated)
+          // This ensures transfer happens AFTER AI finishes speaking, not during
+          const transferWaitTime = actualWaitTime; // Use actual audio duration, not estimated
+          console.log(`📋 Scheduling transfer after ${transferWaitTime.toFixed(0)}ms (actual audio duration)`);
           console.log(`   Transfer number: ${transferNumber}`);
           console.log(`   From number (original DID): ${transferFromNumber || 'auto (will use original caller ID)'}`);
           console.log(`   Call Control ID: ${callControlId}`);
@@ -2686,7 +2705,7 @@ async function handleTranscription(event) {
           });
           
           const transferTimeoutId = setTimeout(async () => {
-            console.log(`⏰ Transfer timeout fired for ${callControlId} after ${waitTime.toFixed(0)}ms`);
+            console.log(`⏰ Transfer timeout fired for ${callControlId} after ${transferWaitTime.toFixed(0)}ms`);
             
             // Check both maps to see if transfer should execute
             const pendingAction = pendingHangups.get(callControlId);
@@ -2774,7 +2793,7 @@ async function handleTranscription(event) {
               // Transfer was cancelled or call ended
               console.log(`ℹ️  Transfer cancelled for ${callControlId} - pending action was cleared or call ended`);
             }
-          }, waitTime);
+          }, transferWaitTime);
           
           // Store timeout ID so we can cancel it if call ends early
           if (!global.pendingTransferTimeouts) {
@@ -3540,116 +3559,6 @@ function clearNoResponseTimer(callControlId) {
 /**
  * GET /webhooks/health - Health check for webhooks
  */
-/**
- * Handle recording saved event
- */
-async function handleRecordingSaved(event) {
-  try {
-    const callControlId = event.payload.call_control_id;
-    const recordingId = event.payload.recording_id || event.payload.id;
-    // Telnyx webhook can have different structures - check both
-    const recordingUrl = event.payload.recording_url || 
-                        event.payload.recording_urls?.mp3 || 
-                        event.payload.recording_urls?.wav || 
-                        event.payload.url ||
-                        null;
-    const recordingDuration = event.payload.recording_duration_seconds || 
-                             event.payload.duration_seconds ||
-                             event.payload.duration ||
-                             null;
-    const recordingStartedAt = event.payload.recording_started_at || 
-                              event.payload.started_at ||
-                              event.payload.created_at ||
-                              null;
-    const recordingEndedAt = event.payload.recording_ended_at || 
-                            event.payload.ended_at ||
-                            null;
-
-    console.log(`🎙️  Recording saved for call: ${callControlId}`);
-    console.log(`   Recording ID: ${recordingId}`);
-    console.log(`   URL: ${recordingUrl}`);
-    console.log(`   Duration: ${recordingDuration}s`);
-    console.log(`   Full payload:`, JSON.stringify(event.payload, null, 2));
-
-    // Store recording metadata in database
-    await query(
-      `INSERT INTO call_recordings (
-        call_control_id,
-        recording_id,
-        recording_url,
-        duration_seconds,
-        recording_started_at,
-        recording_ended_at,
-        status,
-        created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      ON CONFLICT (call_control_id) 
-      DO UPDATE SET
-        recording_id = EXCLUDED.recording_id,
-        recording_url = EXCLUDED.recording_url,
-        duration_seconds = EXCLUDED.duration_seconds,
-        recording_started_at = EXCLUDED.recording_started_at,
-        recording_ended_at = EXCLUDED.recording_ended_at,
-        status = EXCLUDED.status,
-        updated_at = NOW()`,
-      [
-        callControlId,
-        recordingId,
-        recordingUrl,
-        recordingDuration,
-        recordingStartedAt ? new Date(recordingStartedAt) : null,
-        recordingEndedAt ? new Date(recordingEndedAt) : null,
-        'saved'
-      ]
-    );
-
-    console.log(`✅ Recording metadata saved to database for call: ${callControlId}`);
-  } catch (error) {
-    console.error('❌ Error handling recording saved event:', error);
-  }
-}
-
-/**
- * Handle recording failed event
- */
-async function handleRecordingFailed(event) {
-  try {
-    const callControlId = event.payload.call_control_id;
-    const recordingId = event.payload.recording_id;
-    const errorMessage = event.payload.error_message || 'Unknown error';
-
-    console.log(`⚠️  Recording failed for call: ${callControlId}`);
-    console.log(`   Recording ID: ${recordingId}`);
-    console.log(`   Error: ${errorMessage}`);
-
-    // Store recording failure in database
-    await query(
-      `INSERT INTO call_recordings (
-        call_control_id,
-        recording_id,
-        status,
-        error_message,
-        created_at
-      ) VALUES ($1, $2, $3, $4, NOW())
-      ON CONFLICT (call_control_id) 
-      DO UPDATE SET
-        recording_id = EXCLUDED.recording_id,
-        status = EXCLUDED.status,
-        error_message = EXCLUDED.error_message,
-        updated_at = NOW()`,
-      [
-        callControlId,
-        recordingId,
-        'failed',
-        errorMessage
-      ]
-    );
-
-    console.log(`⚠️  Recording failure recorded in database for call: ${callControlId}`);
-  } catch (error) {
-    console.error('❌ Error handling recording failed event:', error);
-  }
-}
 
 router.get('/health', (req, res) => {
   res.json({

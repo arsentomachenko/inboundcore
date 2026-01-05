@@ -27,7 +27,7 @@ class BidirectionalTTSService {
    * @param {string} callControlId - Call control ID
    * @param {string} text - Text to speak
    * @param {object} options - TTS options
-   * @returns {Promise<void>}
+   * @returns {Promise<{actualDurationMs: number, actualDurationSeconds: number, bytesSent: number}>}
    */
   async speak(callControlId, text, options = {}) {
     const requestId = `${callControlId}_${Date.now()}`;
@@ -43,7 +43,7 @@ class BidirectionalTTSService {
       console.warn(`   Existing text: "${existingRequest.text.substring(0, 50)}..."`);
       console.warn(`   New text: "${text.substring(0, 50)}..."`);
       console.warn(`   Ignoring duplicate TTS request to prevent crash`);
-      return; // Skip this request
+      return null; // Skip this request - return null to indicate no new TTS was started
     }
     
     try {
@@ -66,7 +66,7 @@ class BidirectionalTTSService {
       const requestAfterTTS = this.activeSpeechRequests.get(callControlId);
       if (!requestAfterTTS) {
         console.warn(`⚠️  TTS request was cancelled for ${callControlId} during ElevenLabs call - aborting`);
-        return; // Request was cancelled, abort silently
+        return null; // Request was cancelled, abort silently
       }
       
       requestAfterTTS.status = 'converting';
@@ -88,7 +88,7 @@ class BidirectionalTTSService {
       const request = this.activeSpeechRequests.get(callControlId);
       if (!request) {
         console.warn(`⚠️  TTS request was cancelled for ${callControlId} during audio conversion - aborting`);
-        return; // Request was cancelled, abort silently
+        return null; // Request was cancelled, abort silently
       }
       
       request.status = 'streaming';
@@ -97,6 +97,11 @@ class BidirectionalTTSService {
       console.log(`   [3/3] Streaming PCMU to Telnyx (${pcmuBuffer.length} bytes)...`);
       const bytesSent = await streamAudioToCall(callControlId, pcmuBuffer, 160);
       
+      // ⭐ FIX: Calculate ACTUAL audio duration from PCMU buffer size
+      // PCMU @ 8kHz = 8000 bytes per second
+      const actualDurationSeconds = pcmuBuffer.length / 8000;
+      const actualDurationMs = actualDurationSeconds * 1000;
+      
       // Calculate processing duration (for logging only)
       const startTime = request ? request.startTime : Date.now();
       const processingMs = Date.now() - startTime;
@@ -104,12 +109,20 @@ class BidirectionalTTSService {
       console.log(`✅ Bidirectional TTS complete for ${callControlId}`);
       console.log(`   Processing time: ${processingMs}ms`);
       console.log(`   Audio sent: ${bytesSent} bytes`);
-      console.log(`   Estimated audio duration: ${estimatedSeconds.toFixed(2)}s`);
+      console.log(`   📊 ACTUAL audio duration: ${actualDurationSeconds.toFixed(2)}s (calculated from ${pcmuBuffer.length} bytes @ 8kHz)`);
+      console.log(`   📊 Previous estimate: ${estimatedSeconds.toFixed(2)}s (text-based)`);
       
-      // Track TTS cost using text-based estimated duration (billed per second)
-      costTracking.trackElevenLabsTTS(callControlId, estimatedSeconds);
+      // Track TTS cost using ACTUAL duration (more accurate billing)
+      costTracking.trackElevenLabsTTS(callControlId, actualDurationSeconds);
       
       this.activeSpeechRequests.delete(callControlId);
+      
+      // ⭐ NEW: Return actual duration so webhookRoutes can use it
+      return {
+        actualDurationMs,
+        actualDurationSeconds,
+        bytesSent
+      };
       
     } catch (error) {
       console.error(`❌ Bidirectional TTS error for ${callControlId}:`, error);
