@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cost Tracking Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .panel {
+            background: #fff8e1;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .cost-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .cost-box {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .cost-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f57c00;
+        }
+        .cost-label {
+            color: #666;
+            font-size: 12px;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>💰 Cost Tracking Test Page</h1>
+    
+    <button onclick="testAPI()">🧪 Test API Connection</button>
+    <button onclick="location.reload()">🔄 Refresh Data</button>
+    
+    <div class="log" id="log">Click "Test API Connection" to check backend...</div>
+    
+    <div class="panel">
+        <h2>💰 Cost Analysis</h2>
+        <div class="cost-grid">
+            <div class="cost-box">
+                <div class="cost-label">Total Cost</div>
+                <div class="cost-value" id="totalCost">$0.00</div>
+            </div>
+            <div class="cost-box">
+                <div class="cost-label">Telnyx</div>
+                <div class="cost-value" id="telnyxCost" style="color: #1976d2;">$0.00</div>
+            </div>
+            <div class="cost-box">
+                <div class="cost-label">OpenAI</div>
+                <div class="cost-value" id="openaiCost" style="color: #00796b;">$0.00</div>
+            </div>
+            <div class="cost-box">
+                <div class="cost-label">Avg/Call</div>
+                <div class="cost-value" id="avgCost" style="color: #7b1fa2;">$0.00</div>
+            </div>
+        </div>
+        <div style="background: white; padding: 15px; border-radius: 4px;">
+            <strong>Cost Breakdown:</strong>
+            <div id="breakdown" style="margin-top: 10px; color: #666;">
+                No data loaded yet...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let log = document.getElementById('log');
+        
+        function addLog(message) {
+            log.textContent += message + '\n';
+        }
+        
+        function testAPI() {
+            log.textContent = '';
+            addLog('🔍 Testing API connection...');
+            addLog('📡 Fetching: http://localhost:3000/api/agent/stats\n');
+            
+            fetch('http://localhost:3000/api/agent/stats')
+                .then(response => {
+                    addLog(`✅ Response Status: ${response.status} ${response.statusText}`);
+                    return response.json();
+                })
+                .then(data => {
+                    addLog('✅ JSON parsed successfully');
+                    addLog(`\n📊 Raw Response:\n${JSON.stringify(data, null, 2)}\n`);
+                    
+                    if (data.data && data.data.costs) {
+                        addLog('✅ Cost data found!');
+                        updateCosts(data.data.costs);
+                    } else {
+                        addLog('❌ No cost data in response');
+                        addLog('   Expected: data.data.costs');
+                        addLog(`   Got: ${JSON.stringify(data)}`);
+                    }
+                })
+                .catch(error => {
+                    addLog(`❌ Error: ${error.message}`);
+                    addLog('\n🔧 Troubleshooting:');
+                    addLog('   1. Is backend running? (npm run dev)');
+                    addLog('   2. Check port 3000 is correct');
+                    addLog('   3. CORS enabled?');
+                });
+        }
+        
+        function updateCosts(costs) {
+            document.getElementById('totalCost').textContent = '$' + costs.totalCost.toFixed(2);
+            document.getElementById('telnyxCost').textContent = '$' + costs.telnyxCost.toFixed(2);
+            document.getElementById('openaiCost').textContent = '$' + costs.openaiCost.toFixed(4);
+            document.getElementById('avgCost').textContent = '$' + costs.avgCostPerCall.toFixed(2);
+            
+            const breakdown = costs.breakdown;
+            document.getElementById('breakdown').innerHTML = `
+                📞 Call Minutes: $${breakdown.callCost.toFixed(2)}<br>
+                📝 Transcription: $${breakdown.transcriptionCost.toFixed(2)}<br>
+                🎙️ TTS: $${breakdown.ttsCost.toFixed(4)}<br>
+                📲 Transfers: $${breakdown.transferCost.toFixed(2)}<br>
+                🤖 AI Processing: $${breakdown.openaiCost.toFixed(4)}
+            `;
+            
+            addLog('\n✅ Display updated successfully!');
+        }
+        
+        // Auto-load on page load
+        window.onload = () => {
+            testAPI();
+            // Auto-refresh every 2 seconds
+            setInterval(testAPI, 2000);
+        };
+    </script>
+</body>
+</html>
+

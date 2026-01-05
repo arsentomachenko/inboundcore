@@ -1,0 +1,959 @@
+---
+pid: 899698
+cwd: /home/ubuntu/test/testing/telnyx/backend
+active_command: npm run dev
+last_command: clear
+last_exit_code: 0
+---
+📝 Transcription [FINAL]: "I'm sorry. This person is not available. If you would like to leave an additional message, please reply after the tone." (confidence: 0.9000)
+💰 OpenAI cost: $0.000347 (2258 in + 14 out tokens) [conversation]
+⚠️  AI said goodbye but did not call set_call_outcome - forcing hangup
+🤖 AI Response: I understand. No problem at all. Have a great day!
+✅ User marked as answered: Majowl Keith
+🎙️  Attempting to speak on call: v3:qJZOwTu-1lgQ6o0rRZOs5CCmNtHdAZeA4nqKjV4GKA7D6Oi142VXuQ
+   Voice: Polly.Joanna-Neural
+   Text length: 50 characters
+   First 100 chars: "I understand. No problem at all. Have a great day!..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.000750 (50 characters)
+📋 Hangup scheduled after AI finishes speaking
+💰 OpenAI cost: $0.000356 (2315 in + 14 out tokens) [conversation]
+⚠️  AI said goodbye but did not call set_call_outcome - forcing hangup
+🤖 AI Response: I understand. No problem at all! Have a great day!
+✅ User marked as answered: robert ashenoff
+🎙️  Attempting to speak on call: v3:-7tiTB3uM4wKZ3icO_y9KzkYm65vlHMIMwR4fkFGAV9LV6m6D2NVew
+   Voice: Polly.Joanna-Neural
+   Text length: 50 characters
+   First 100 chars: "I understand. No problem at all! Have a great day!..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.000750 (50 characters)
+📋 Hangup scheduled after AI finishes speaking
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:FdRSGakd-IKaA06JO_qg17who6cHZ6HbjlFFidOzBI4_dTEVehD9EA (originator_cancel)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+📞 markCallComplete called for: v3:FdRSGakd-IKaA06JO_qg17who6cHZ6HbjlFFidOzBI4_dTEVehD9EA
+   Active calls waiting: 19
+⚠️  Call v3:FdRSGakd-IKaA06JO_qg17who6cHZ6HbjlFFidOzBI4_dTEVehD9EA not found in activeCallsCompletion Map
+   This may happen if server restarted during call
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "To review, rerecord, or add to your message, press 1. To mark your message urgent, press 2. To mark your message private, press 3. To send your message as is, press pound." (confidence: 0.9000)
+🤖 Ignoring IVR/voicemail system prompt (4 keywords detected)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qJZOwTu-1lgQ6o0rRZOs5CCmNtHdAZeA4nqKjV4GKA7D6Oi142VXuQ
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:-7tiTB3uM4wKZ3icO_y9KzkYm65vlHMIMwR4fkFGAV9LV6m6D2NVew
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "If you are satisfied with your message," (confidence: 0.9000)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "I might be on Chelsea Drive. It's been ages since I checked." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:_f4w4_kFxeKtPZ_kpqChr36AZ26sLFeEra5F4SL15fJJLhB_lK6lUA
+💰 OpenAI cost: $0.000355 (2244 in + 31 out tokens) [conversation]
+🤖 AI Response: I appreciate your patience! Just to confirm, your last name is Schlesener and you're at 1358 Mirada Dr, AZ, correct?
+✅ User marked as answered: Tina Schlesener
+🎙️  Attempting to speak on call: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+   Voice: Polly.Joanna-Neural
+   Text length: 116 characters
+   First 100 chars: "I appreciate your patience! Just to confirm, your last name is Schlesener and you're at 1358 Mirada ..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001740 (116 characters)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "We didn't get your message either" (confidence: 0.9000)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "To send this message pound or hang up." (confidence: 0.9000)
+🔇 Ignoring transcription - transfer/hangup pending
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Your message has been sent." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+💰 OpenAI cost: $0.000371 (2307 in + 42 out tokens) [conversation]
+🤖 AI Response: I understand. Just a quick final-expense benefit review — I only need a couple questions. So your last name is May and you're over in 870 West 2875 South, UT, right?
+✅ User marked as answered: Lesa May
+🎙️  Attempting to speak on call: v3:_f4w4_kFxeKtPZ_kpqChr36AZ26sLFeEra5F4SL15fJJLhB_lK6lUA
+   Voice: Polly.Joanna-Neural
+   Text length: 165 characters
+   First 100 chars: "I understand. Just a quick final-expense benefit review — I only need a couple questions. So your la..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.002475 (165 characters)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:_f4w4_kFxeKtPZ_kpqChr36AZ26sLFeEra5F4SL15fJJLhB_lK6lUA
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "You know, I used to live in a lovely little place near a park." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qJZOwTu-1lgQ6o0rRZOs5CCmNtHdAZeA4nqKjV4GKA7D6Oi142VXuQ
+📵 Executing pending hangup after speech completed
+📵 Attempting to hang up call: v3:qJZOwTu-1lgQ6o0rRZOs5CCmNtHdAZeA4nqKjV4GKA7D6Oi142VXuQ
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:-7tiTB3uM4wKZ3icO_y9KzkYm65vlHMIMwR4fkFGAV9LV6m6D2NVew
+📵 Executing pending hangup after speech completed
+📵 Attempting to hang up call: v3:-7tiTB3uM4wKZ3icO_y9KzkYm65vlHMIMwR4fkFGAV9LV6m6D2NVew
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Are you still there?" (confidence: 0.9000)
+✅ Call ended successfully: v3:qJZOwTu-1lgQ6o0rRZOs5CCmNtHdAZeA4nqKjV4GKA7D6Oi142VXuQ
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:qJZOwTu-1lgQ6o0rRZOs5CCmNtHdAZeA4nqKjV4GKA7D6Oi142VXuQ (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 2
+      - Reason: User hung up during conversation
+💰 Final call cost: $0.0909
+   Telnyx: $0.0902 (1.33 min)
+   OpenAI: $0.0007 (2 calls)
+Conversation ended. Duration: 88.1s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:qJZOwTu-1lgQ6o0rRZOs5CCmNtHdAZeA4nqKjV4GKA7D6Oi142VXuQ
+   Active calls waiting: 19
+✅ Call v3:qJZOwTu-1lgQ6o0rRZOs5CCmNtHdAZeA4nqKjV4GKA7D6Oi142VXuQ marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:VXVLaQDlB2LZ-awTcy8QcKUoy3MovS91J8Zc_S8wuHG2ABNJi6f7nA
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:VXVLaQDlB2LZ-awTcy8QcKUoy3MovS91J8Zc_S8wuHG2ABNJi6f7nA (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 3
+      - Reason: User hung up during conversation
+💰 Final call cost: $0.1242
+   Telnyx: $0.1231 (1.80 min)
+   OpenAI: $0.0011 (3 calls)
+Conversation ended. Duration: 130.3s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:VXVLaQDlB2LZ-awTcy8QcKUoy3MovS91J8Zc_S8wuHG2ABNJi6f7nA
+   Active calls waiting: 18
+✅ Call v3:VXVLaQDlB2LZ-awTcy8QcKUoy3MovS91J8Zc_S8wuHG2ABNJi6f7nA marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+✅ Call ended successfully: v3:-7tiTB3uM4wKZ3icO_y9KzkYm65vlHMIMwR4fkFGAV9LV6m6D2NVew
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:-7tiTB3uM4wKZ3icO_y9KzkYm65vlHMIMwR4fkFGAV9LV6m6D2NVew (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 3
+      - Reason: User hung up during conversation
+💰 Final call cost: $0.0738
+   Telnyx: $0.0728 (1.03 min)
+   OpenAI: $0.0011 (3 calls)
+Conversation ended. Duration: 63.9s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:-7tiTB3uM4wKZ3icO_y9KzkYm65vlHMIMwR4fkFGAV9LV6m6D2NVew
+   Active calls waiting: 17
+✅ Call v3:-7tiTB3uM4wKZ3icO_y9KzkYm65vlHMIMwR4fkFGAV9LV6m6D2NVew marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Do you like parks?" (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+💰 OpenAI cost: $0.000349 (2193 in + 34 out tokens) [conversation]
+🤖 AI Response: Yes, I'm here! Just checking in to confirm: your last name is Leonard and you're over in 2617 VININGS CENTRAL DR SE, GA, right?
+✅ User marked as answered: John Leonard Leonard
+🎙️  Attempting to speak on call: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+   Voice: Polly.Joanna-Neural
+   Text length: 127 characters
+   First 100 chars: "Yes, I'm here! Just checking in to confirm: your last name is Leonard and you're over in 2617 VINING..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001905 (127 characters)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "because you were not speaking or because of a bad connection. To disconnect, press 1. To record your message, press 2." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "To continue recording, 2. Delete and rerecord your message, press 3. For delivery options, press 4. To send a fax, press 6. To cancel this press star." (confidence: 0.9000)
+🤖 Ignoring IVR/voicemail system prompt (5 keywords detected)
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "press 1. To listen to your message, press 2. To erase and rerecord, press 3. To continue recording where you left off," (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "To send this message now" (confidence: 0.9000)
+💰 OpenAI cost: $0.000373 (2348 in + 34 out tokens) [conversation]
+🤖 AI Response: I understand. Just to confirm, your last name is Arizmendi and you're at 1520 north 11ave greeleyy, CO, correct?
+✅ User marked as answered: Rodolfo Arizmendi
+🎙️  Attempting to speak on call: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+   Voice: Polly.Joanna-Neural
+   Text length: 112 characters
+   First 100 chars: "I understand. Just to confirm, your last name is Arizmendi and you're at 1520 north 11ave greeleyy, ..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001680 (112 characters)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Unfortunately, the system cannot process your entries. Please try again later." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "press pound or hang up." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:_f4w4_kFxeKtPZ_kpqChr36AZ26sLFeEra5F4SL15fJJLhB_lK6lUA
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:_f4w4_kFxeKtPZ_kpqChr36AZ26sLFeEra5F4SL15fJJLhB_lK6lUA (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 3
+      - Reason: User hung up during conversation
+💰 Final call cost: $0.0842
+   Telnyx: $0.0832 (1.18 min)
+   OpenAI: $0.0011 (3 calls)
+Conversation ended. Duration: 94.7s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:_f4w4_kFxeKtPZ_kpqChr36AZ26sLFeEra5F4SL15fJJLhB_lK6lUA
+   Active calls waiting: 16
+✅ Call v3:_f4w4_kFxeKtPZ_kpqChr36AZ26sLFeEra5F4SL15fJJLhB_lK6lUA marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "press 4." (confidence: 0.9000)
+💰 OpenAI cost: $0.000363 (2286 in + 34 out tokens) [conversation]
+🤖 AI Response: I completely understand. Just need to verify a quick detail: your last name is Schlesener and you're at 1358 Mirada Dr, AZ, right?
+✅ User marked as answered: Tina Schlesener
+🎙️  Attempting to speak on call: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+   Voice: Polly.Joanna-Neural
+   Text length: 130 characters
+   First 100 chars: "I completely understand. Just need to verify a quick detail: your last name is Schlesener and you're..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001950 (130 characters)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Oh, dear. I can be a bit forgetful." (confidence: 0.9000)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Are you still there? If you are satisfied with message," (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+💰 OpenAI cost: $0.000403 (2518 in + 43 out tokens) [conversation]
+🤖 AI Response: That's perfectly okay, sandra! We all have those moments. Just to make sure I have the right details, is your last name bernard and are you at 615 chelsea dr, MS?
+✅ User marked as answered: sandra bernard
+🎙️  Attempting to speak on call: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Voice: Polly.Joanna-Neural
+   Text length: 162 characters
+   First 100 chars: "That's perfectly okay, sandra! We all have those moments. Just to make sure I have the right details..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.002430 (162 characters)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "To review, rerecord, or to your message, press 1. To mark your message urgent, press 2. To mark your message private, press 3. To send your message as is, press pound." (confidence: 0.9000)
+🤖 Ignoring IVR/voicemail system prompt (4 keywords detected)
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:JHZrXmhLiWiJRFq1E6UfjaYvRzGbz5fCfQBops9aXzi_tbCAhfvsWw (originator_cancel)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+📞 markCallComplete called for: v3:JHZrXmhLiWiJRFq1E6UfjaYvRzGbz5fCfQBops9aXzi_tbCAhfvsWw
+   Active calls waiting: 15
+⚠️  Call v3:JHZrXmhLiWiJRFq1E6UfjaYvRzGbz5fCfQBops9aXzi_tbCAhfvsWw not found in activeCallsCompletion Map
+   This may happen if server restarted during call
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Is that for my name or something else?" (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Are you still there?" (confidence: 0.9000)
+💰 OpenAI cost: $0.000354 (2239 in + 30 out tokens) [conversation]
+🤖 AI Response: Yes, I'm still here! Just confirming your last name is Leonard and you're in 2617 VININGS CENTRAL DR SE, GA, correct?
+✅ User marked as answered: John Leonard Leonard
+🎙️  Attempting to speak on call: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+   Voice: Polly.Joanna-Neural
+   Text length: 117 characters
+   First 100 chars: "Yes, I'm still here! Just confirming your last name is Leonard and you're in 2617 VININGS CENTRAL DR..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001755 (117 characters)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "press 1. To listen to your message, press 2. To erase and rerecord, press 3. To continue recording where you left off," (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "To replay your message, press 1. To continue record 2. To delete and rerecord your message, press 3. For delivery options, press 4. To send a fax, press 6. To cancel this message," (confidence: 0.9000)
+🤖 Ignoring IVR/voicemail system prompt (6 keywords detected)
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:z45DnQu5Jg5B9CyxP-KMxD0HoI0i80I0RJBsBTNfAsxNkeitlU5dUg (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: Leslie Gibson
+💰 Final call cost: $0.1351
+   Telnyx: $0.1351 (2.12 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 145.6s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:z45DnQu5Jg5B9CyxP-KMxD0HoI0i80I0RJBsBTNfAsxNkeitlU5dUg
+   Active calls waiting: 15
+✅ Call v3:z45DnQu5Jg5B9CyxP-KMxD0HoI0i80I0RJBsBTNfAsxNkeitlU5dUg marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "press 4." (confidence: 0.9000)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Oh, I'm not sure if it's Sandra or something else." (confidence: 0.9000)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "press star." (confidence: 0.9000)
+💰 OpenAI cost: $0.000373 (2331 in + 39 out tokens) [conversation]
+🤖 AI Response: I get it, and I appreciate your time! Just one quick thing to confirm: your last name is Schlesener and you're at 1358 Mirada Dr, AZ, correct?
+✅ User marked as answered: Tina Schlesener
+🎙️  Attempting to speak on call: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+   Voice: Polly.Joanna-Neural
+   Text length: 142 characters
+   First 100 chars: "I get it, and I appreciate your time! Just one quick thing to confirm: your last name is Schlesener ..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.002130 (142 characters)
+💰 OpenAI cost: $0.000405 (2580 in + 30 out tokens) [conversation]
+🤖 AI Response: No problem at all! Just to confirm, your last name is bernard and you’re located at 615 chelsea dr, MS?
+✅ User marked as answered: sandra bernard
+🎙️  Attempting to speak on call: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Voice: Polly.Joanna-Neural
+   Text length: 103 characters
+   First 100 chars: "No problem at all! Just to confirm, your last name is bernard and you’re located at 615 chelsea dr, ..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001545 (103 characters)
+💰 OpenAI cost: $0.000380 (2392 in + 36 out tokens) [conversation]
+🤖 AI Response: I understand. Just to confirm, your last name is Arizmendi and you're at 1520 north 11ave greeleyy, CO, is that correct?
+✅ User marked as answered: Rodolfo Arizmendi
+🎙️  Attempting to speak on call: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+   Voice: Polly.Joanna-Neural
+   Text length: 120 characters
+   First 100 chars: "I understand. Just to confirm, your last name is Arizmendi and you're at 1520 north 11ave greeleyy, ..."
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001800 (120 characters)
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:-xxdxTRCEQSxbmcJ41xBX7w28PD0fMZvqo_eV43Qgm6Ca1rUPxF0Uw (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: wanda estevez
+💰 Final call cost: $0.1630
+   Telnyx: $0.1630 (2.57 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 156.2s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:-xxdxTRCEQSxbmcJ41xBX7w28PD0fMZvqo_eV43Qgm6Ca1rUPxF0Uw
+   Active calls waiting: 14
+✅ Call v3:-xxdxTRCEQSxbmcJ41xBX7w28PD0fMZvqo_eV43Qgm6Ca1rUPxF0Uw marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:KvRKFqYOmLF27tUoZYPVmHIQ89-Xg8Ivo6AE7mbERkd0pWg1jMNilg (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: Carolyn Minton
+💰 Final call cost: $0.1372
+   Telnyx: $0.1372 (2.15 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 148.7s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:KvRKFqYOmLF27tUoZYPVmHIQ89-Xg8Ivo6AE7mbERkd0pWg1jMNilg
+   Active calls waiting: 13
+✅ Call v3:KvRKFqYOmLF27tUoZYPVmHIQ89-Xg8Ivo6AE7mbERkd0pWg1jMNilg marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "You know, names can really flip mind." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "To send this message now or hang up." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:bzEGCMnpLav-KVtuIE-cmckfdic5iFEfM10mE91J3Zx9X6Qx-kSMgw (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: Brenda Hood
+💰 Final call cost: $0.1570
+   Telnyx: $0.1570 (2.47 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 150.0s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:bzEGCMnpLav-KVtuIE-cmckfdic5iFEfM10mE91J3Zx9X6Qx-kSMgw
+   Active calls waiting: 12
+✅ Call v3:bzEGCMnpLav-KVtuIE-cmckfdic5iFEfM10mE91J3Zx9X6Qx-kSMgw marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "To review, rerecord, or add to your message, press 1. To mark your message urgent, press 2. To mark your message private, press 3. To send your message as is, press pound." (confidence: 0.9000)
+🤖 Ignoring IVR/voicemail system prompt (4 keywords detected)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Speaking of names, I once had a pet parrot named Charlie." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Are you still there? If you are satisfied with your message, press 1. To listen to your message, press 2. To erase and rerecord," (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "He could say anything." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:FIQ-wfKYWCaGparK2D6CyM1JzWY8JYgV7QYgEhG3dhOpz4OChku6Cg (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: edilberta barretto
+💰 Final call cost: $0.1352
+   Telnyx: $0.1352 (2.12 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 128.3s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:FIQ-wfKYWCaGparK2D6CyM1JzWY8JYgV7QYgEhG3dhOpz4OChku6Cg
+   Active calls waiting: 11
+✅ Call v3:FIQ-wfKYWCaGparK2D6CyM1JzWY8JYgV7QYgEhG3dhOpz4OChku6Cg marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Are you still there?" (confidence: 0.9000)
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+💰 OpenAI cost: $0.000363 (2281 in + 35 out tokens) [conversation]
+🤖 AI Response: Yes, I'm here! I just need to confirm your last name is Leonard and that you're at 2617 VININGS CENTRAL DR SE, GA. Is that correct?
+✅ User marked as answered: John Leonard Leonard
+🎙️  Attempting to speak on call: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+   Voice: Polly.Joanna-Neural
+   Text length: 131 characters
+   First 100 chars: "Yes, I'm here! I just need to confirm your last name is Leonard and that you're at 2617 VININGS CENT..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001965 (131 characters)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Your message has been sent." (confidence: 0.9000)
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:gavkE1h-TmBxsMGJQdbEvPHq7weVZQennSr6BYj6olRuWJBVQB3d9g (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: Earl Byrnes
+💰 Final call cost: $0.1631
+   Telnyx: $0.1631 (2.57 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 156.1s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:gavkE1h-TmBxsMGJQdbEvPHq7weVZQennSr6BYj6olRuWJBVQB3d9g
+   Active calls waiting: 10
+✅ Call v3:gavkE1h-TmBxsMGJQdbEvPHq7weVZQennSr6BYj6olRuWJBVQB3d9g marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Calling" (confidence: 0.9000)
+💰 OpenAI cost: $0.000387 (2441 in + 34 out tokens) [conversation]
+🤖 AI Response: I understand. Just to confirm, your last name is Arizmendi and you're at 1520 north 11ave greeleyy, CO, right?
+✅ User marked as answered: Rodolfo Arizmendi
+🎙️  Attempting to speak on call: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+   Voice: Polly.Joanna-Neural
+   Text length: 110 characters
+   First 100 chars: "I understand. Just to confirm, your last name is Arizmendi and you're at 1520 north 11ave greeleyy, ..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001650 (110 characters)
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 7
+      - Reason: User hung up during conversation
+💰 Final call cost: $0.1281
+   Telnyx: $0.1259 (1.80 min)
+   OpenAI: $0.0022 (6 calls)
+Conversation ended. Duration: 108.7s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+   Active calls waiting: 9
+✅ Call v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+💰 OpenAI cost: $0.000388 (2446 in + 35 out tokens) [conversation]
+🤖 AI Response: I understand. Just to confirm, your last name is Arizmendi and you're located at 1520 north 11ave greeleyy, CO, right?
+✅ User marked as answered: Rodolfo Arizmendi
+🎙️  Attempting to speak on call: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+   Voice: Polly.Joanna-Neural
+   Text length: 118 characters
+   First 100 chars: "I understand. Just to confirm, your last name is Arizmendi and you're located at 1520 north 11ave gr..."
+❌ Error speaking with Polly: {
+  errors: [
+    {
+      code: '90018',
+      title: 'Call has already ended',
+      detail: "This call is no longer active and can't receive commands."
+    }
+  ]
+}
+   Call Control ID: v3:qO8sjXs8Kk0S1ltY4nqRjrW6cHze2wfLdPcq_2Ezfojz_7SEhTMHeg
+   Errors: [
+  {
+    "code": "90018",
+    "title": "Call has already ended",
+    "detail": "This call is no longer active and can't receive commands."
+  }
+]
+Error processing transcription: Request failed with status code 422
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Your message has been sent. Goodbye." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 3
+      - Reason: User hung up during conversation
+💰 Final call cost: $0.0977
+   Telnyx: $0.0966 (1.40 min)
+   OpenAI: $0.0011 (3 calls)
+Conversation ended. Duration: 97.3s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA
+   Active calls waiting: 8
+✅ Call v3:k_JruTx494JaFCZBNmPgpE24LE-_Pt7a9uIORxbNBi_NtMC4fB8fqA marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "press 3. To continue recording where you left off, press 4." (confidence: 0.9000)
+🤖 Ignoring IVR/voicemail system prompt (2 keywords detected)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Oh, Chelsea Drive." (confidence: 0.9000)
+💰 OpenAI cost: $0.000408 (2622 in + 25 out tokens) [conversation]
+🤖 AI Response: Got it! Just to confirm, is your last name bernard and you're over at 615 Chelsea Dr, MS?
+✅ User marked as answered: sandra bernard
+🎙️  Attempting to speak on call: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Voice: Polly.Joanna-Neural
+   Text length: 89 characters
+   First 100 chars: "Got it! Just to confirm, is your last name bernard and you're over at 615 Chelsea Dr, MS?..."
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:CDmwFLOcu1Sl3rrDIP4CeuPQXc-LwdPdZbB3mnQLQm1FxqokT5rIng (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: Helen Hayes
+💰 Final call cost: $0.1435
+   Telnyx: $0.1435 (2.25 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 162.5s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:CDmwFLOcu1Sl3rrDIP4CeuPQXc-LwdPdZbB3mnQLQm1FxqokT5rIng
+   Active calls waiting: 7
+✅ Call v3:CDmwFLOcu1Sl3rrDIP4CeuPQXc-LwdPdZbB3mnQLQm1FxqokT5rIng marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001335 (89 characters)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Such a lovely area." (confidence: 0.9000)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+💰 OpenAI cost: $0.000417 (2659 in + 30 out tokens) [conversation]
+🤖 AI Response: It really is! Just to confirm before we continue, your last name is bernard and you're at 615 Chelsea Dr, MS, right?
+✅ User marked as answered: sandra bernard
+🎙️  Attempting to speak on call: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Voice: Polly.Joanna-Neural
+   Text length: 116 characters
+   First 100 chars: "It really is! Just to confirm before we continue, your last name is bernard and you're at 615 Chelse..."
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 4
+      - Reason: User hung up during conversation
+💰 Final call cost: $0.1009
+   Telnyx: $0.0995 (1.42 min)
+   OpenAI: $0.0014 (4 calls)
+Conversation ended. Duration: 109.2s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ
+   Active calls waiting: 6
+✅ Call v3:_eEA5MQoUEeoNE6LQt7hlDyxXNiE64ioT5u0L5xhMtW2tX3sI1YtWQ marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001740 (116 characters)
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Remember when we had a neighborhood picnic there." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:LlFSBsnL6Xt53upD40Sm9wydnbWmD9OlLw93tuX_YjFToW68EVj9HA (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: yvette crawford
+💰 Final call cost: $0.1548
+   Telnyx: $0.1548 (2.43 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 148.5s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:LlFSBsnL6Xt53upD40Sm9wydnbWmD9OlLw93tuX_YjFToW68EVj9HA
+   Active calls waiting: 5
+⚠️  Call v3:LlFSBsnL6Xt53upD40Sm9wydnbWmD9OlLw93tuX_YjFToW68EVj9HA not found in activeCallsCompletion Map
+   This may happen if server restarted during call
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:gsVdNRzcBMpd8oypDGdwFunhcDsBR8rfuW6H9IWzP4KS7PNAYY4ozg (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: Rita Stinson
+💰 Final call cost: $0.1632
+   Telnyx: $0.1632 (2.57 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 156.5s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:gsVdNRzcBMpd8oypDGdwFunhcDsBR8rfuW6H9IWzP4KS7PNAYY4ozg
+   Active calls waiting: 5
+✅ Call v3:gsVdNRzcBMpd8oypDGdwFunhcDsBR8rfuW6H9IWzP4KS7PNAYY4ozg marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:kTDSoUytZQiv6ijVVnI28dR-UhQsAby52dvEFhjzqCfPrkMOVpFJLA (originator_cancel)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+📞 markCallComplete called for: v3:kTDSoUytZQiv6ijVVnI28dR-UhQsAby52dvEFhjzqCfPrkMOVpFJLA
+   Active calls waiting: 4
+⚠️  Call v3:kTDSoUytZQiv6ijVVnI28dR-UhQsAby52dvEFhjzqCfPrkMOVpFJLA not found in activeCallsCompletion Map
+   This may happen if server restarted during call
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Oh, my last name always gets jumbled." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Maybe it's Bernard," (confidence: 0.9000)
+💰 OpenAI cost: $0.000420 (2700 in + 25 out tokens) [conversation]
+🤖 AI Response: No problem! Just to confirm, your last name is Bernard and you're at 615 Chelsea Dr, MS, correct?
+✅ User marked as answered: sandra bernard
+🎙️  Attempting to speak on call: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Voice: Polly.Joanna-Neural
+   Text length: 97 characters
+   First 100 chars: "No problem! Just to confirm, your last name is Bernard and you're at 615 Chelsea Dr, MS, correct?..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001455 (97 characters)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "but I'm not sure about this anymore." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "It's been so long since I moved." (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:oTz21725o7nql2xcCT15CReHs3bYk6NlWHmSjk6cniB7ZCsujwpb_A (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: Margaret Kelly
+💰 Final call cost: $0.1715
+   Telnyx: $0.1715 (2.70 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 164.7s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:oTz21725o7nql2xcCT15CReHs3bYk6NlWHmSjk6cniB7ZCsujwpb_A
+   Active calls waiting: 4
+✅ Call v3:oTz21725o7nql2xcCT15CReHs3bYk6NlWHmSjk6cniB7ZCsujwpb_A marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:aHabydGDHHaC8JuLs17e8TGJQqUsI0e8rvpsyBta9YDW6ZArVyZD-g (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: enisa julevic
+💰 Final call cost: $0.1291
+   Telnyx: $0.1291 (2.02 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 148.3s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:aHabydGDHHaC8JuLs17e8TGJQqUsI0e8rvpsyBta9YDW6ZArVyZD-g
+   Active calls waiting: 3
+⚠️  Call v3:aHabydGDHHaC8JuLs17e8TGJQqUsI0e8rvpsyBta9YDW6ZArVyZD-g not found in activeCallsCompletion Map
+   This may happen if server restarted during call
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "You know, I remember that Mississippi is known for its beautiful rivers and tasty food." (confidence: 0.9000)
+💰 OpenAI cost: $0.000429 (2749 in + 27 out tokens) [conversation]
+🤖 AI Response: Absolutely, it's a lovely state! Just to confirm, is your last name Bernard and you're at 615 Chelsea Dr, MS?
+✅ User marked as answered: sandra bernard
+🎙️  Attempting to speak on call: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Voice: Polly.Joanna-Neural
+   Text length: 109 characters
+   First 100 chars: "Absolutely, it's a lovely state! Just to confirm, is your last name Bernard and you're at 615 Chelse..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001635 (109 characters)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Have you ever tried those catfishes?" (confidence: 0.9000)
+⏸️  Ignoring transcription - AI is currently speaking
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Oh, I'm too exhausted to keep talking, my dear child." (confidence: 0.9000)
+💰 OpenAI cost: $0.000439 (2796 in + 33 out tokens) [conversation]
+🤖 AI Response: I completely understand, sandra. Just to wrap this up, can you confirm that your last name is Bernard and you're at 615 Chelsea Dr, MS?
+✅ User marked as answered: sandra bernard
+🎙️  Attempting to speak on call: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Voice: Polly.Joanna-Neural
+   Text length: 135 characters
+   First 100 chars: "I completely understand, sandra. Just to wrap this up, can you confirm that your last name is Bernar..."
+📨 Telnyx webhook: call.transcription
+📝 Transcription [FINAL]: "Take care of yourself." (confidence: 0.9000)
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.002025 (135 characters)
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+💰 OpenAI cost: $0.000445 (2841 in + 32 out tokens) [conversation]
+🤖 AI Response: Thank you, sandra! I appreciate that. Just one last thing — is your last name Bernard and are you at 615 Chelsea Dr, MS?
+✅ User marked as answered: sandra bernard
+🎙️  Attempting to speak on call: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Voice: Polly.Joanna-Neural
+   Text length: 120 characters
+   First 100 chars: "Thank you, sandra! I appreciate that. Just one last thing — is your last name Bernard and are you at..."
+✅ Polly TTS command sent successfully
+💰 TTS cost: $0.001800 (120 characters)
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:d7l0CbWJwIy118qKbLAs_2n-8Fnf2ckC8At6onIpVfuwU8CuBMcyRQ (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: eugene pettiford
+💰 Final call cost: $0.1373
+   Telnyx: $0.1373 (2.15 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 156.6s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:d7l0CbWJwIy118qKbLAs_2n-8Fnf2ckC8At6onIpVfuwU8CuBMcyRQ
+   Active calls waiting: 3
+✅ Call v3:d7l0CbWJwIy118qKbLAs_2n-8Fnf2ckC8At6onIpVfuwU8CuBMcyRQ marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.speak.started
+🗣️  Speak started: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.speak.ended
+🗣️  Speak ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 14
+      - Reason: User hung up during conversation
+💰 Final call cost: $0.2773
+   Telnyx: $0.2717 (3.88 min)
+   OpenAI: $0.0056 (14 calls)
+Conversation ended. Duration: 236.8s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw
+   Active calls waiting: 2
+✅ Call v3:qkC2vi_7jHVYv_e-9WKqHvOy6aNArDePJ5Fe8_vtVSF0ikjeHmnxdw marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+📨 Telnyx webhook: call.hangup
+📵 Call ended: v3:XBQ8jAbRLs8kXAZ0s7odDUJOp6W9mIXhvQ6Megb7SnyytbmiTa84Vw (normal_clearing)
+   📊 Call Context:
+      - Stage: unknown
+      - User responses: 0
+      - Reason: User hung up without responding (likely voicemail/not interested)
+✅ User marked as voicemail: Corliss Matthews
+💰 Final call cost: $0.2282
+   Telnyx: $0.2282 (3.62 min)
+   OpenAI: $0.0000 (0 calls)
+Conversation ended. Duration: 245.0s
+Final qualifications: {
+  verified_info: null,
+  no_alzheimers: null,
+  no_hospice: null,
+  age_qualified: null,
+  has_bank_account: null
+}
+📞 markCallComplete called for: v3:XBQ8jAbRLs8kXAZ0s7odDUJOp6W9mIXhvQ6Megb7SnyytbmiTa84Vw
+   Active calls waiting: 1
+✅ Call v3:XBQ8jAbRLs8kXAZ0s7odDUJOp6W9mIXhvQ6Megb7SnyytbmiTa84Vw marked as complete: completed
+📞 Call completed with status: completed
+⏸️  Agent not running (status: paused), skipping queue processing
+💾 Saved 181 call costs to storage
+⏰ Call v3:whC-XTcl1uimbbwY-xB6hH7gXv-p1leQ9i2Wx8wcGX_QkSswNmWj4w timed out after 300000ms
+📞 Call completed with status: timeout
+⏸️  Agent not running (status: paused), skipping queue processing
+⏰ Call v3:whC-XTcl1uimbbwY-xB6hH7gXv-p1leQ9i2Wx8wcGX_QkSswNmWj4w timed out after 300000ms
+📞 Call completed with status: timeout
+⏸️  Agent not running (status: paused), skipping queue processing
