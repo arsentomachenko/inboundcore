@@ -1843,81 +1843,164 @@ async function handleTranscription(event) {
         
         // ⚠️ CRITICAL: Check for voicemail/IVR keywords even during AI speech
         // This is our fallback when AMD returns "not_sure"
-    const voicemailKeywords = [
-      // Core voicemail phrases
-      'voicemail', 'voice mail', 'mailbox', 'mailbox is full', 'mailbox full',
-      'leave a message', 'leave me a message', 'please leave your message', 'please leave your message for',
-      'after the beep', 'at the tone', 'after the tone',
-      'record your message', 'record your message after the tone', 'record your message after the beep',
-      'record your name', 'when you have finished recording',
-      'you may hang up', 'not available', 'please leave a message',
-      'can i take a message', 'can take a message', 'take a message', 'i can take a message',
-      'reason for calling', 'name and reason for calling', 'record your name and reason for calling',
-      'see if this person is available', 'see if person is available', 'i\'ll see if this person is available',
-      'i\'ll see if person is available',
-      'forwarded to an automated voice messaging system', 'automated voice messaging system',
-      'forwarded to an automatic voice message system', 'automatic voice message system',
-      'have been forwarded to an automatic voice message system', 'have been forwarded to an automatic voice messaging system',
-      'voice messaging system', 'voice message system', 'voice messaging', 'voice message',
-      'forwarded to automated', 'forwarded to automatic',
-      'you\'ve reached', 'you have reached', 'reaching',
-      'return your call', 'return your follow-up',
-      'i will return your call', 'i will return your follow-up', 'as soon as possible',
-      'no answer', 'if you get a no answer', 'if you\'d get a no answer',
-      'call my home number', 'call my', 'home number', 'call my number',
-      
-      // Personal voicemail greetings
-      'not at the phone', "i'm not at the phone", "i am not at the phone",
-      "can't come to the phone", "cannot come to the phone", "i can't come to the phone",
-      "can't get to the phone", "cannot get to the phone", "i can't get to the phone", "can't get to the phone right now",
-      "can't answer", "cannot answer", "i can't answer", "can't answer it now",
-      "can't take your call", "cannot take your call", "i can't take your call", "can't take your call now",
-      "unable to answer", "unable to answer the phone", "i'm unable to answer", "i'm unable to answer the phone",
-      "do not answer", "don't answer", "i do not answer", "i don't answer",
-      "please text me", "text me", "please text",
-      "ringer is turned off", "ringer turned off", "my ringer is off", "ringer is off",
-      "i'll get back to you", "get back to you", "get back with you", "will get back",
-      "i'll call you back", "call you back", "call you right back", "i'll call you right back",
-      "return your call", "return your follow-up", "i will return your call", "i will return your follow-up",
-      "leave your name", "brief message", "leave a brief message",
-      "i will get back", "get back to you shortly", "get back with you shortly",
-      "as soon as i can", "as soon as possible", "i'll get back", "get back to you as soon",
-      "unable to hang", "can't hang", "cannot hang", "i'm unable to hang", "i can't hang",
-      "give me a call", "give me a call when", "call when you can", "when you can",
-      "call me when you can", "call me back when you can", "give me a call back",
-      "leave your message and phone number", "leave your message and phone", "message and phone number",
-      "phone number for", "leave a message and phone number", "leave a message and phone",
-      "leave your message", "leave a message", "leave me a message", "leave message",
-      "leave message and", "leave message and phone", "leave message and number",
-      
-      // Setup/configuration messages
-      'not been set up', 'has not been set up', 'hasn\'t been set up',
-      'has a voicemail', 'reached a voicemail', 'reached the voicemail',
-      
-      // Retry messages
-      'try your call again', 'try again later', 'please try again',
-      'call again later', 'try back later',
-      
-      // Call completion errors
-      'cannot be completed', 'cannot complete your call', 'could not be completed',
-      'unable to complete', 'cannot complete the call',
-      
-      // Person/number references
-      'person you are calling', 'person you have reached', 'person you\'re calling',
-      'person you dialed', 'person you have dialed', 'the person you dialed',
-      'person you\'re trying to reach', 'person you are trying to reach', 'trying to reach',
-      'number you have reached', 'number you have dialed', 'number you dialed',
-      'subscriber', 'customer you are calling', 'party you have reached',
-      'will be connected', 'will be connected to', 'connected to the person',
-      
-      // Recording/answering service messages
-      'recording this call', 'recording the call', 'recording for the person',
-      
-      // IVR menu options
-      'to re-record', 'press 1', 'press 2', 'press 3', 'press 4', 'press 5', 'press 6', 'press 7',
-      'press pound', 'press star', 'delivery options', 'to continue', 'to delete', 'for more options',
-      'to send an sms', 'sms notification', 'send an sms'
-    ];
+        const voicemailKeywords = [
+          // Core voicemail phrases
+          'voicemail', 'voice mail', 'mailbox', 'mailbox is full', 'mailbox full',
+          'box is full', 'box full', 'voicemail box is full', 'voicemail box full',
+          'not enough space', 'not enough space to leave', 'not enough space to leave a message',
+          'cannot leave a message', 'unable to leave a message', 'cannot accept messages',
+          'mailbox capacity reached', 'mailbox storage full', 'storage full',
+          'leave a message', 'leaving a message', 'leave me a message', 'please leave your message', 'please leave your message for',
+          'after the beep', 'at the tone', 'after the tone',
+          'record your message', 'record your message after the tone', 'record your message after the beep',
+          'record your name', 'when you have finished recording',
+          'you may hang up', 'not available', 'please leave a message',
+          'cannot be reached', 'this person cannot be reached', 'person cannot be reached',
+          'cannot be reached at the moment', 'this person cannot be reached at the moment',
+          'person cannot be reached at the moment', 'is not available at the moment',
+          'not accepting your call', 'not accepting calls', 'is not accepting your call',
+          'number is not accepting', 'not accepting', 'the number you are calling is not accepting',
+          'can i take a message', 'can take a message', 'take a message', 'i can take a message',
+          'reason for calling', 'name and reason for calling', 'record your name and reason for calling',
+          'see if this person is available', 'see if person is available', 'i\'ll see if this person is available',
+          'i\'ll see if person is available',
+          'forwarded to an automated voice messaging system', 'automated voice messaging system',
+          'forwarded to an automatic voice message system', 'automatic voice message system',
+          'have been forwarded to an automatic voice message system', 'have been forwarded to an automatic voice messaging system',
+          'voice messaging system', 'voice message system', 'voice messaging', 'voice message',
+          'forwarded to automated', 'forwarded to automatic',
+          'you\'ve reached', 'you have reached', 'reaching',
+          'return your call', 'return your follow-up',
+          'i will return your call', 'i will return your follow-up', 'as soon as possible',
+          'no answer', 'if you get a no answer', 'if you\'d get a no answer',
+          'call my home number', 'call my', 'home number', 'call my number',
+          
+          // Personal voicemail greetings
+          'not at the phone', "i'm not at the phone", "i am not at the phone",
+          "can't come to the phone", "cannot come to the phone", "i can't come to the phone",
+          "can't get to the phone", "cannot get to the phone", "i can't get to the phone", "can't get to the phone right now",
+          "can't answer", "cannot answer", "i can't answer", "can't answer it now",
+          "can't take your call", "cannot take your call", "i can't take your call", "can't take your call now",
+          "unable to answer", "unable to answer the phone", "i'm unable to answer", "i'm unable to answer the phone",
+          "couldn't answer", "could not answer", "i couldn't answer", "sorry i couldn't answer",
+          "sorry i couldn't answer your call", "i couldn't answer your call", "couldn't answer your call",
+          "sorry, i couldn't answer your call", "sorry couldn't answer your call",
+          "do not answer", "don't answer", "i do not answer", "i don't answer",
+          "please text me", "text me", "please text",
+          "ringer is turned off", "ringer turned off", "my ringer is off", "ringer is off",
+          "i'll get back to you", "get back to you", "get back with you", "will get back",
+          "i'll call you back", "call you back", "call you right back", "i'll call you right back",
+          "return your call", "return your follow-up", "i will return your call", "i will return your follow-up",
+          "leave your name", "brief message", "leave a brief message",
+          "i will get back", "get back to you shortly", "get back with you shortly",
+          "as soon as i can", "as soon as possible", "i'll get back", "get back to you as soon",
+          "unable to hang", "can't hang", "cannot hang", "i'm unable to hang", "i can't hang",
+          "give me a call", "give me a call when", "call when you can", "when you can",
+          "call me when you can", "call me back when you can", "give me a call back",
+          "leave your message and phone number", "leave your message and phone", "message and phone number",
+          "phone number for", "leave a message and phone number", "leave a message and phone",
+          "leave your phone number", "leave your phone number and", "leave your number",
+          "leave your message", "leave a message", "leave me a message", "leave message",
+          "leave message and", "leave message and phone", "leave message and number",
+          "i will call you", "i'll call you", "will call you",
+          
+          // Setup/configuration messages
+          'not been set up', 'has not been set up', 'hasn\'t been set up',
+          'has a voicemail', 'reached a voicemail', 'reached the voicemail',
+          
+          // Retry messages
+          'try your call again', 'try again later', 'please try again',
+          'call again later', 'try back later',
+          
+          // Call completion errors
+          'cannot be completed', 'cannot complete your call', 'could not be completed',
+          'unable to complete', 'cannot complete the call',
+          'cannot be dialed', 'number you requested cannot be dialed', 'number cannot be dialed',
+          'sorry, the number you requested cannot be dialed', 'the number you requested cannot be dialed',
+          'number you requested', 'cannot be dialed', 'requested cannot be dialed',
+          
+          // Person/number references
+          'person you are calling', 'person you have reached', 'person you\'re calling',
+          'person you dialed', 'person you have dialed', 'the person you dialed',
+          'person you\'re trying to reach', 'person you are trying to reach', 'trying to reach',
+          'number you have reached', 'number you have dialed', 'number you dialed',
+          'subscriber', 'customer you are calling', 'party you have reached',
+          'will be connected', 'will be connected to', 'connected to the person',
+          
+          // Recording/answering service messages
+          'recording this call', 'recording the call', 'recording for the person',
+          
+          // IVR menu options
+          'to re-record', 'press 1', 'press 2', 'press 3', 'press 4', 'press 5', 'press 6', 'press 7',
+          'press pound', 'press star', 'delivery options', 'to continue', 'to delete', 'for more options',
+          'to send an sms', 'sms notification', 'send an sms',
+          
+          // Spanish voicemail phrases
+          'buzón de voz', 'buzón de voz la persona', 'envió al buzón', 'enviado al buzón',
+          'buzón de mensajes', 'correo de voz', 'mensaje de voz', 'deje un mensaje',
+          'deje su mensaje', 'deje su nombre', 'deje su número', 'deje su teléfono',
+          'después del tono', 'después de la señal', 'al oír la señal',
+          'grabar su mensaje', 'grabe su mensaje', 'grabe su nombre',
+          'no disponible', 'no está disponible', 'no puedo contestar',
+          'no puedo atender', 'no puedo atender su llamada', 'no puedo contestar su llamada',
+          'le devolveré la llamada', 'te devolveré la llamada', 'volveré a llamar',
+          'llamada no contestada', 'no contesta', 'no contesta el teléfono',
+          'ha llegado a', 'ha marcado', 'la persona que marcó',
+          'persona que está llamando', 'persona que ha marcado', 'persona que marcó',
+          'presione 1', 'presione 2', 'presione 3', 'presione 4', 'presione 5',
+          'oprima 1', 'oprima 2', 'oprima 3', 'oprima 4', 'oprima 5',
+          'mensaje completo', 'buzón lleno', 'buzón de mensajes lleno',
+          'no se puede completar', 'no se pudo completar', 'llamada no completada',
+          
+          // Portuguese voicemail phrases
+          'caixa postal', 'caixa de mensagens', 'correio de voz', 'mensagem de voz',
+          'deixe uma mensagem', 'deixe seu recado', 'deixe seu nome', 'deixe seu número',
+          'deixe seu telefone', 'após o sinal', 'após o toque', 'ao ouvir o sinal',
+          'grave sua mensagem', 'gravar mensagem', 'grave seu nome',
+          'não disponível', 'não estou disponível', 'não posso atender',
+          'não posso atender sua ligação', 'não posso atender o telefone',
+          'vou retornar sua ligação', 'vou te retornar', 'vou ligar de volta',
+          'ligação não atendida', 'não atende', 'não atende o telefone',
+          'você ligou para', 'você discou', 'a pessoa que discou',
+          'pessoa que está ligando', 'pessoa que ligou', 'pessoa que discou',
+          'pressione 1', 'pressione 2', 'pressione 3', 'pressione 4', 'pressione 5',
+          'aperte 1', 'aperte 2', 'aperte 3', 'aperte 4', 'aperte 5',
+          'caixa cheia', 'caixa postal cheia', 'mensagem completa',
+          'não pode ser completada', 'não foi possível completar', 'ligação não completada',
+          
+          // French voicemail phrases
+          'boîte vocale', 'messagerie vocale', 'répondeur', 'répondeur automatique',
+          'laissez un message', 'laissez votre message', 'laissez votre nom', 'laissez votre numéro',
+          'laissez votre téléphone', 'après le signal', 'après le bip', 'au signal sonore',
+          'enregistrez votre message', 'enregistrer un message', 'enregistrez votre nom',
+          'non disponible', 'je ne suis pas disponible', 'je ne peux pas répondre',
+          'je ne peux pas répondre à votre appel', 'je ne peux pas décrocher',
+          'je vous rappellerai', 'je vais vous rappeler', 'je vais rappeler',
+          'appel non répondu', 'ne répond pas', 'ne répond pas au téléphone',
+          'vous avez appelé', 'vous avez composé', 'la personne que vous avez appelée',
+          'personne que vous appelez', 'personne qui a appelé', 'personne qui a composé',
+          'appuyez sur 1', 'appuyez sur 2', 'appuyez sur 3', 'appuyez sur 4', 'appuyez sur 5',
+          'tapez 1', 'tapez 2', 'tapez 3', 'tapez 4', 'tapez 5',
+          'boîte pleine', 'messagerie pleine', 'message complet',
+          'ne peut pas être complété', 'n\'a pas pu être complété', 'appel non complété',
+          
+          // German voicemail phrases
+          'mailbox', 'ansagebox', 'sprachbox', 'sprachnachricht',
+          'hinterlassen sie eine nachricht', 'hinterlassen sie ihre nachricht', 'hinterlassen sie ihren namen',
+          'hinterlassen sie ihre nummer', 'hinterlassen sie ihre telefonnummer',
+          'nach dem ton', 'nach dem signal', 'beim ertönen des signals',
+          'sprechen sie ihre nachricht', 'sprechen sie nach dem ton', 'sprechen sie ihren namen',
+          'nicht verfügbar', 'nicht erreichbar', 'ich bin nicht verfügbar', 'ich kann nicht rangehen',
+          'ich kann nicht ans telefon gehen', 'ich kann nicht abheben',
+          'ich rufe zurück', 'ich werde zurückrufen', 'ich werde sie zurückrufen',
+          'anruf nicht beantwortet', 'geht nicht ran', 'geht nicht ans telefon',
+          'sie haben angerufen', 'sie haben gewählt', 'die person die angerufen hat',
+          'person die anruft', 'person die angerufen hat', 'person die gewählt hat',
+          'drücken sie 1', 'drücken sie 2', 'drücken sie 3', 'drücken sie 4', 'drücken sie 5',
+          'taste 1', 'taste 2', 'taste 3', 'taste 4', 'taste 5',
+          'mailbox voll', 'ansagebox voll', 'nachricht voll',
+          'kann nicht abgeschlossen werden', 'konnte nicht abgeschlossen werden', 'anruf nicht abgeschlossen'
+        ];
     
     const transcriptLower = transcript.toLowerCase();
     const matchedKeywords = voicemailKeywords.filter(keyword => transcriptLower.includes(keyword));
