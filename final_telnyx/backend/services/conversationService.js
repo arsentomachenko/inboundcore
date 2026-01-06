@@ -73,6 +73,29 @@ class ConversationService {
       return null;
     }
     
+    // 🔧 RACE CONDITION FIX: Wait for active TTS operations to complete
+    // This prevents finalizing conversation while TTS is still trying to add messages
+    try {
+      const bidirectionalTTS = require('./bidirectionalTTSService');
+      if (bidirectionalTTS.isSpeaking && bidirectionalTTS.isSpeaking(callControlId)) {
+        console.log(`⏳ Waiting for active TTS to complete for ${callControlId} before finalizing...`);
+        // Wait up to 5 seconds for TTS to complete
+        const maxWait = 5000;
+        const startWait = Date.now();
+        while (bidirectionalTTS.isSpeaking(callControlId) && (Date.now() - startWait) < maxWait) {
+          await new Promise(resolve => setTimeout(resolve, 100)); // Check every 100ms
+        }
+        if (bidirectionalTTS.isSpeaking(callControlId)) {
+          console.warn(`⚠️  TTS still active after ${maxWait}ms wait - proceeding with finalization anyway`);
+        } else {
+          console.log(`✅ TTS completed, proceeding with finalization`);
+        }
+      }
+    } catch (e) {
+      // If bidirectionalTTS doesn't exist or error, continue anyway
+      console.warn(`⚠️  Could not check TTS status: ${e.message}`);
+    }
+    
     // Mark as finalized immediately to prevent race conditions
     this.finalizedCalls.add(callControlId);
 
@@ -284,6 +307,58 @@ class ConversationService {
     // Store hangup cause if provided
     if (hangupCause) {
       conversation.hangupCause = hangupCause;
+    }
+
+    // 🔍 CRITICAL FIX: Validate that to_number is a user phone, not a DID number
+    // This ensures conversations can be properly matched to leads
+    if (conversation.toNumber) {
+      try {
+        const normalizedTo = conversation.toNumber.replace(/[^0-9]/g, '');
+        const userCheck = await query(
+          `SELECT id FROM users WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = $1 LIMIT 1`,
+          [normalizedTo]
+        );
+        
+        if (userCheck.rows.length === 0) {
+          // to_number doesn't exist in users table - might be a DID number (incorrect)
+          // Try to find the correct lead phone from telnyx_calls table
+          console.warn(`   ⚠️  WARNING: to_number (${conversation.toNumber}) not found in users table - may be a DID number`);
+          console.warn(`   🔍 Attempting to find correct lead phone from telnyx_calls table...`);
+          
+          try {
+            const telnyxCallResult = await query(
+              `SELECT from_number, to_number FROM telnyx_calls WHERE call_control_id = $1`,
+              [callControlId]
+            );
+            
+            if (telnyxCallResult.rows.length > 0 && telnyxCallResult.rows[0].to_number) {
+              const correctToNumber = telnyxCallResult.rows[0].to_number;
+              const normalizedCorrectTo = correctToNumber.replace(/[^0-9]/g, '');
+              const correctUserCheck = await query(
+                `SELECT id FROM users WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = $1 LIMIT 1`,
+                [normalizedCorrectTo]
+              );
+              
+              if (correctUserCheck.rows.length > 0) {
+                console.warn(`   ✅ Found correct to_number from telnyx_calls: ${correctToNumber} (was: ${conversation.toNumber})`);
+                conversation.toNumber = correctToNumber;
+                // Also update from_number if needed
+                if (telnyxCallResult.rows[0].from_number) {
+                  conversation.fromNumber = telnyxCallResult.rows[0].from_number;
+                }
+              } else {
+                console.error(`   ❌ ERROR: Corrected to_number (${correctToNumber}) also not found in users table`);
+              }
+            }
+          } catch (error) {
+            console.error(`   ⚠️  Error checking telnyx_calls for correction: ${error.message}`);
+          }
+        } else {
+          console.log(`   ✅ Validated: to_number (${conversation.toNumber}) exists in users table`);
+        }
+      } catch (error) {
+        console.error(`   ⚠️  Error validating to_number: ${error.message}`);
+      }
     }
 
     // Save to PostgreSQL database

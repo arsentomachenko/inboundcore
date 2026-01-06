@@ -38,7 +38,7 @@ async function findConversations(phoneNumber) {
       WHERE REGEXP_REPLACE(from_number, '[^0-9]', '', 'g') = $1
          OR REGEXP_REPLACE(to_number, '[^0-9]', '', 'g') = $1
       ORDER BY start_time DESC
-      LIMIT 10`,
+      LIMIT 100`,
       [normalizedPhone]
     );
     

@@ -1,0 +1,185 @@
+🔍 Starting comprehensive call analysis...
+
+📊 Fetching all calls from database...
+✅ Database connected
+✅ Found 1686 total calls
+
+
+====================================================================================================
+📊 COMPREHENSIVE CALL ANALYSIS REPORT
+====================================================================================================
+
+📈 SUMMARY:
+   Total calls analyzed: 1686
+   Calls with issues: 2
+
+⚠️  INCOMPLETE CONVERSATIONS (2):
+
+   📞 Call: v3:0FNAsdDkojHIqgp19a8z1qv0RinhaQA8AfmmBvobK-NdSwt4rVgQRg
+      Duration: 66s
+      Status: no_response
+      Messages: 1
+      Issues: Long call (66s) with no user messages
+
+   📞 Call: v3:XT6TAjrzyxX6ULLFLBZRJI6OAW2zZXkdcoGjYyqhxEbpVJ-EjOKiAw
+      Duration: 65s
+      Status: no_response
+      Messages: 1
+      Issues: Long call (65s) with no user messages
+
+
+📋 DETAILED ANALYSIS - TOP 10 LONGEST CALLS:
+
+1. Call: v3:syDmKHwdPsNgq5jQ6SyuOTyuaRQPCdSh_72YQdDU8V6-MfYVMZV4dQ
+   Duration: 106s (1.77 minutes)
+   Status: completed
+   Transfer Cost: $0.000000
+   Hangup Cause: normal_clearing
+   Messages: 14 (AI: 9, Lead: 4, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   Last 3 messages:
+      1. [AI] I can't hear you clearly. Please try again.
+      2. [AI] [Auto-hangup: No response after warning]
+      3. [System] [System: Call ended by system]
+
+2. Call: v3:iig6JnWwIp_HwscZofWW3xuFRHRYkm_NzAcMBMu8LwRCTIrVbuet-g
+   Duration: 72s (1.20 minutes)
+   Status: completed
+   Transfer Cost: $0.000000
+   Hangup Cause: normal_clearing
+   Messages: 9 (AI: 6, Lead: 2, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   Last 3 messages:
+      1. [AI] I can't hear you clearly. Please try again.
+      2. [System] [User hung up during conversation]
+      3. [AI] [Auto-hangup: No response after warning]
+
+3. Call: v3:UCPDgk7N4GDDFnLV7k6jcKSRVaAAZO1EMGMdF_k1gmRjiA4lHtXeMA
+   Duration: 71s (1.18 minutes)
+   Status: completed
+   Transfer Cost: $0.000000
+   Hangup Cause: normal_clearing
+   Messages: 9 (AI: 5, Lead: 3, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   Last 3 messages:
+      1. [Lead] [Overlapping speech - ignored] I mean, I've never--
+      2. [AI] I can't hear you clearly. Please try again.
+      3. [System] [User hung up during conversation]
+
+4. Call: v3:qf-GoqBU-p26WUIk9buK6AnzYt0N-tcXJJ18is8wABecR8wY23SDiw
+   Duration: 68s (1.13 minutes)
+   Status: completed
+   Transfer Cost: $0.000000
+   Hangup Cause: normal_clearing
+   Messages: 13 (AI: 8, Lead: 4, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   Last 3 messages:
+      1. [AI] I can't hear you clearly. Please try again.
+      2. [System] [User hung up during conversation]
+      3. [AI] [Auto-hangup: No response after warning]
+
+5. Call: v3:0FNAsdDkojHIqgp19a8z1qv0RinhaQA8AfmmBvobK-NdSwt4rVgQRg
+   Duration: 66s (1.10 minutes)
+   Status: no_response
+   Transfer Cost: $0.000000
+   Hangup Cause: originator_cancel
+   Messages: 1 (AI: 0, Lead: 0, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   ⚠️  Issues: Long call (66s) with no user messages
+   Last 3 messages:
+      1. [System] [Call ended - originator_cancel]
+
+6. Call: v3:XT6TAjrzyxX6ULLFLBZRJI6OAW2zZXkdcoGjYyqhxEbpVJ-EjOKiAw
+   Duration: 65s (1.08 minutes)
+   Status: no_response
+   Transfer Cost: $0.000000
+   Hangup Cause: originator_cancel
+   Messages: 1 (AI: 0, Lead: 0, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   ⚠️  Issues: Long call (65s) with no user messages
+   Last 3 messages:
+      1. [System] [Call ended - originator_cancel]
+
+7. Call: v3:agO79KFZw9Gn1AFMJwgdJPLFONR_acw1xJoRAjkvWrKq0k2EuicSlA
+   Duration: 62s (1.03 minutes)
+   Status: completed
+   Transfer Cost: $0.000000
+   Hangup Cause: normal_clearing
+   Messages: 10 (AI: 6, Lead: 3, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   Last 3 messages:
+      1. [Lead] I said, "No."
+      2. [AI] Great! Are you currently in hospice care or a nursing home?
+      3. [System] [User hung up during AI response - call ended 1.7s after user message]
+
+8. Call: v3:8szDWvdbMaTn_ID3Z_V5ate41t48aA4OvwXGWjHUf2sNFbTXsoVzkQ
+   Duration: 62s (1.03 minutes)
+   Status: completed
+   Transfer Cost: $0.000000
+   Hangup Cause: normal_clearing
+   Messages: 9 (AI: 5, Lead: 3, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   Last 3 messages:
+      1. [Lead] [Overlapping speech - ignored] no no i'm not no i'm not i'm not
+      2. [AI] I can't hear you clearly. Please try again.
+      3. [System] [User hung up during conversation]
+
+9. Call: v3:KFSOtYwPj2nbWMEhDRjZ7UwIsHsQISr7KtIyAPZwoqeUf4etc2hX9g
+   Duration: 59s (0.98 minutes)
+   Status: completed
+   Transfer Cost: $0.000000
+   Hangup Cause: normal_clearing
+   Messages: 7 (AI: 5, Lead: 1, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   Last 3 messages:
+      1. [AI] I can't hear you clearly. Please try again.
+      2. [AI] [Auto-hangup: No response after warning]
+      3. [System] [System: Call ended by system]
+
+10. Call: v3:0F5UujbOY28YbFui6cML9MMns404gPW8IdmbdFsWSx2b3cvWX4jrTQ
+   Duration: 57s (0.95 minutes)
+   Status: completed
+   Transfer Cost: $0.000000
+   Hangup Cause: normal_clearing
+   Messages: 6 (AI: 4, Lead: 1, System: 1)
+   Stage: unknown
+   Transfer Indicators: None
+   Transfer Triggered: No
+   User Agreed: No
+   Last 3 messages:
+      1. [AI] I can't hear you clearly. Please try again.
+      2. [AI] I can't hear you clearly. Please try again.
+      3. [System] [User hung up without responding]
+
+====================================================================================================
+✅ Analysis complete
+====================================================================================================
+
+✅ Analysis script completed

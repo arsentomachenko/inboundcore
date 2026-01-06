@@ -584,6 +584,15 @@ async function processSingleCall(callItem) {
   // Note: activeCalls is incremented in processCallQueue BEFORE calling this function
   // to reserve the slot and prevent race conditions
   let callInitiated = false; // Track if call was successfully initiated
+  
+  // ✅ FIX: Validate callItem.user and phone before processing
+  if (!callItem || !callItem.user || !callItem.user.phone) {
+    console.error(`❌ Invalid callItem in processSingleCall: user is ${callItem?.user ? 'missing phone' : 'null'}`);
+    agentState.activeCalls--; // Decrement since we reserved a slot
+    agentState.failedCalls++;
+    return { success: false, error: 'Invalid callItem: missing user or phone' };
+  }
+  
   try {
     // Get phone number with smart DID matching based on area code/state
     let fromNumber;
@@ -840,6 +849,12 @@ async function processCallQueue() {
     for (let i = 0; i < callsToProcess; i++) {
       const callItem = callQueue.shift();
       if (callItem) {
+        // ✅ FIX: Validate callItem.user and phone before accessing
+        if (!callItem.user || !callItem.user.phone) {
+          console.error(`❌ Invalid callItem: user is ${callItem.user ? 'missing phone' : 'null'}, skipping call`);
+          continue; // Skip this invalid item
+        }
+        
         // ⚠️ FIX: Normalize phone number and check if already being called
         const normalizedPhone = callItem.user.phone.replace(/[^0-9]/g, '');
         if (activePhoneNumbers.has(normalizedPhone)) {
@@ -946,6 +961,7 @@ router.delete('/clear-all-data', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.activePhoneNumbers = activePhoneNumbers;
 module.exports.agentState = agentState;
 module.exports.agentConfig = agentConfig;
 module.exports.markCallComplete = markCallComplete;

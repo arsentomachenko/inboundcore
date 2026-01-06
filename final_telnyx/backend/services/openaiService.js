@@ -274,8 +274,10 @@ YOU ARE **REQUIRED** TO CALL FUNCTIONS. This is not a suggestion - it's **MANDAT
    → Then speak: "Perfect, thanks. So it looks like..."
 
 2️⃣ User answers Alzheimer's question:
-   → User says "No" → CALL: update_qualification({no_alzheimers: true})
-   → User says "Yes" → CALL: update_qualification({no_alzheimers: false})
+   → User says "No" / "No, I don't have" / "I don't have" → CALL: update_qualification({no_alzheimers: true})
+   → User says "Yes" / "Yes, I have" → CALL: update_qualification({no_alzheimers: false})
+   → ⚠️ TRANSCRIPTION ERRORS: If user says something like "Though, I don't have" or "Know, I don't have", 
+     this is likely "No, I don't have" misheard by STT - treat as "No" and call update_qualification({no_alzheimers: true})
    → Then speak: "Great! Are you currently in hospice care..."
 
 3️⃣ User answers hospice question:
@@ -353,6 +355,38 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
   /**
    * Get the next response using conversational AI with function calling
    */
+  /**
+   * Normalize transcript to fix common STT transcription errors
+   * This helps the AI understand user responses correctly
+   */
+  _normalizeTranscript(transcript) {
+    if (!transcript) return transcript;
+    
+    let normalized = transcript.trim();
+    
+    // ⭐ FIX: Common transcription errors for "No"
+    // "though" is often misheard for "no" at the start of sentences
+    // Pattern: "though, I don't have" -> "no, I don't have"
+    if (/^though\s*,?\s*(i\s+)?(don't|dont|do not)/i.test(normalized)) {
+      normalized = normalized.replace(/^though\s*,?\s*/i, 'no, ');
+      console.log(`   🔧 Normalized transcript: "${transcript}" -> "${normalized}" (fixed "though" -> "no")`);
+    }
+    
+    // "know" can be misheard for "no" at the start
+    if (/^know\s*,?\s*(i\s+)?(don't|dont|do not)/i.test(normalized)) {
+      normalized = normalized.replace(/^know\s*,?\s*/i, 'no, ');
+      console.log(`   🔧 Normalized transcript: "${transcript}" -> "${normalized}" (fixed "know" -> "no")`);
+    }
+    
+    // "now" can be misheard for "no" in some contexts
+    if (/^now\s*,?\s*(i\s+)?(don't|dont|do not)/i.test(normalized)) {
+      normalized = normalized.replace(/^now\s*,?\s*/i, 'no, ');
+      console.log(`   🔧 Normalized transcript: "${transcript}" -> "${normalized}" (fixed "now" -> "no")`);
+    }
+    
+    return normalized;
+  }
+
   async getNextResponse(callId, userTranscript = null, confidence = 1.0) {
     const state = this.conversationStates.get(callId);
     if (!state) {
@@ -361,11 +395,17 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
 
     const { userInfo } = state;
 
-    // Add user's response to conversation history
+    // ⭐ FIX: Normalize transcript to fix common STT errors before processing
+    let normalizedTranscript = userTranscript;
     if (userTranscript) {
+      normalizedTranscript = this._normalizeTranscript(userTranscript);
+    }
+
+    // Add user's response to conversation history (use normalized version)
+    if (normalizedTranscript) {
       state.messages.push({
         role: 'user',
-        content: userTranscript
+        content: normalizedTranscript
       });
     }
 
@@ -442,17 +482,33 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
     // This forces GPT to call functions for qualification answers
     let toolChoice = 'auto';  // Default: let AI decide
     
-    if (userTranscript) {
-      const transcript = userTranscript.toLowerCase().trim();
+    if (normalizedTranscript) {
+      const transcript = normalizedTranscript.toLowerCase().trim();
       const lastAssistantMessage = [...state.messages].reverse().find(m => m.role === 'assistant');
       const lastAssistantText = lastAssistantMessage?.content?.toLowerCase() || '';
       
       // Pattern 1: User is clearly answering a yes/no question
       // Match affirmative/negative words, allowing for "uh" prefix and "I do"/"I have" suffix
       // Handles: "yes", "yeah", "uh yeah", "yeah I do", "uh yeah I do", "I do", "I have", etc.
+      // ⭐ FIX: Also handle transcription errors like "though" for "no", and negative phrases like "I don't have"
       const trimmedTranscript = transcript.trim();
+      const transcriptLower = trimmedTranscript.toLowerCase();
+      
+      // Standard yes/no patterns
       const isYesNoAnswer = /^(uh\s+)?(yes|yeah|yep|yup|yess|yea|sure|okay|ok|uh-huh|uh\s+huh|no|nope|nah|naw|right|correct|that's\s+right|that's\s+correct|absolutely|definitely)(\s+(i\s+(do|have)))?\b/i.test(trimmedTranscript) ||
                             /^(i\s+(do|have))\b/i.test(trimmedTranscript);
+      
+      // ⭐ FIX: Handle transcription errors for "No" - common STT mistakes
+      // "though" is often misheard for "no", "know" can be misheard, etc.
+      const isNoAnswerWithError = /^(though|know|now|so|to|do)\s*,?\s*(i\s+)?(don't|dont|do not)\s+(have|got)/i.test(trimmedTranscript) ||
+                                   /^(though|know|now|so|to|do)\s*,?\s*(i\s+)?(don't|dont|do not)/i.test(trimmedTranscript);
+      
+      // ⭐ FIX: Detect negative phrases that clearly indicate "no" answer
+      const isNegativePhrase = /\b(i\s+)?(don't|dont|do not|never|haven't|havent|have not)\s+(have|got|been|had)/i.test(transcript) ||
+                                /\b(no\s+,?\s*)?(i\s+)?(don't|dont|do not)\s+(have|got)/i.test(transcript);
+      
+      // Combine all patterns - if any match, treat as yes/no answer
+      const isYesNoAnswerFinal = isYesNoAnswer || isNoAnswerWithError || isNegativePhrase;
       
       // Pattern 2: User is stating their age (answering age question)
       const isAgeAnswer = /\b\d{2}\b/.test(transcript) || /\b(fifty|sixty|seventy|eighty|i'm \d{2}|im \d{2})\b/i.test(transcript);
@@ -500,11 +556,17 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       }
       
       // 🔥 FORCE function call if user is answering a qualification question (but NOT the health issue question)
-      if ((isYesNoAnswer || isAgeAnswer || hasAgeInResponse || hasBankInResponse || hasAtHomeResponse) && askedQualificationQuestion && !askedHealthIssue) {
+      if ((isYesNoAnswerFinal || isAgeAnswer || hasAgeInResponse || hasBankInResponse || hasAtHomeResponse) && askedQualificationQuestion && !askedHealthIssue) {
         toolChoice = 'required';
         console.log('🎯 FORCING function call - user answering qualification question');
         console.log(`   User said: "${transcript}"`);
         console.log(`   AI asked about: ${askedVerification ? 'verification' : askedAlzheimers ? 'alzheimers' : askedHospice ? 'hospice' : askedAge ? 'age' : askedBankAccount ? 'bank account' : 'transfer'}`);
+        if (isNoAnswerWithError) {
+          console.log(`   ✅ Detected transcription error (e.g., "though" for "no") - treating as negative answer`);
+        }
+        if (isNegativePhrase) {
+          console.log(`   ✅ Detected negative phrase (e.g., "I don't have") - treating as "no" answer`);
+        }
         if (hasAtHomeResponse) {
           console.log(`   ✅ Detected "at home" response to hospice question - treating as "no" answer`);
         }
@@ -527,7 +589,7 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       // This catches cases where AI might skip function calls during qualification flow
       // BUT ONLY if the user's transcript actually looks like an answer!
       // 🚨 CRITICAL: Exclude health issue question - it's NOT a qualification question!
-      const looksLikeAnswer = isYesNoAnswer || isAgeAnswer || hasAgeInResponse || hasBankInResponse || hasAtHomeResponse;
+      const looksLikeAnswer = isYesNoAnswerFinal || isAgeAnswer || hasAgeInResponse || hasBankInResponse || hasAtHomeResponse;
       
       if (hasUnansweredQualifications && state.qualifications.verified_info === true && askedQualificationQuestion && looksLikeAnswer && !askedHealthIssue) {
         if (toolChoice !== 'required') {
@@ -585,6 +647,8 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       }
       
       // Handle tool calls (newer format) or function calls (legacy)
+      // ⭐ FIX: Declare assistantResponse early to avoid "Cannot access before initialization" error
+      let assistantResponse = ''; // Initialize early - will be set from message.content later if needed
       let shouldHangup = false;
       let shouldTransfer = false;
       let functionCallProcessed = false;
@@ -601,12 +665,72 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
         console.log(`Function called: ${functionName}`, functionArgs);
         
         if (functionName === 'update_qualification') {
-          // Update qualification status
-          Object.keys(functionArgs).forEach(key => {
-            if (functionArgs[key] !== undefined && functionArgs[key] !== null) {
-              state.qualifications[key] = functionArgs[key];
+          // ⭐ CRITICAL FIX: Validate prerequisites before updating qualifications
+          // Prevent setting later qualifications when earlier ones are null
+          const quals = state.qualifications;
+          let shouldBlockUpdate = false;
+          let blockedField = null;
+          let requiredPrerequisite = null;
+          
+          // Check prerequisites in order
+          if (functionArgs.age_qualified !== undefined && functionArgs.age_qualified !== null) {
+            // Can't set age_qualified if no_hospice is null
+            if (quals.no_hospice === null) {
+              shouldBlockUpdate = true;
+              blockedField = 'age_qualified';
+              requiredPrerequisite = 'no_hospice';
             }
-          });
+          }
+          
+          if (functionArgs.has_bank_account !== undefined && functionArgs.has_bank_account !== null) {
+            // Can't set has_bank_account if age_qualified is null
+            if (quals.age_qualified === null) {
+              shouldBlockUpdate = true;
+              blockedField = 'has_bank_account';
+              requiredPrerequisite = 'age_qualified';
+            }
+          }
+          
+          if (functionArgs.no_hospice !== undefined && functionArgs.no_hospice !== null) {
+            // Can't set no_hospice if no_alzheimers is null
+            if (quals.no_alzheimers === null) {
+              shouldBlockUpdate = true;
+              blockedField = 'no_hospice';
+              requiredPrerequisite = 'no_alzheimers';
+            }
+          }
+          
+          if (shouldBlockUpdate) {
+            console.warn(`⚠️  BLOCKED qualification update: Cannot set ${blockedField} because ${requiredPrerequisite} is null`);
+            console.warn(`   Current qualifications:`, state.qualifications);
+            console.warn(`   Attempted update:`, functionArgs);
+            // Don't update the blocked field - ask the prerequisite question instead
+            // Remove the blocked field from the update
+            const validUpdate = { ...functionArgs };
+            delete validUpdate[blockedField];
+            
+            // Update only valid fields
+            Object.keys(validUpdate).forEach(key => {
+              if (validUpdate[key] !== undefined && validUpdate[key] !== null) {
+                state.qualifications[key] = validUpdate[key];
+              }
+            });
+            
+            // Force asking the prerequisite question
+            const nextQuestion = this._getNextQuestion(state);
+            if (nextQuestion) {
+              assistantResponse = nextQuestion;
+              console.log(`   ✅ Forced asking prerequisite question: ${nextQuestion}`);
+            }
+          } else {
+            // All prerequisites met - update normally
+            Object.keys(functionArgs).forEach(key => {
+              if (functionArgs[key] !== undefined && functionArgs[key] !== null) {
+                state.qualifications[key] = functionArgs[key];
+              }
+            });
+          }
+          
           console.log('Updated qualifications:', state.qualifications);
           functionCallProcessed = true;
         } else if (functionName === 'set_call_outcome') {
@@ -643,7 +767,22 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
                 assistantResponse = nextQuestion;
                 console.log('   ✅ Regenerated response to ask missing qualification question');
               } else {
-                assistantResponse = `Got it, thanks!`;
+                // Fallback: Ask the first missing question directly
+                if (quals.no_alzheimers === null) {
+                  assistantResponse = `Have you ever been diagnosed with Alzheimer's or dementia?`;
+                  console.log('   ✅ Fallback: Asking Alzheimer\'s question directly');
+                } else if (quals.no_hospice === null) {
+                  assistantResponse = `Great! Are you currently in hospice care or a nursing home?`;
+                  console.log('   ✅ Fallback: Asking hospice question directly');
+                } else if (quals.age_qualified === null) {
+                  assistantResponse = `Perfect! Are you between 50 and 78?`;
+                  console.log('   ✅ Fallback: Asking age question directly');
+                } else if (quals.has_bank_account === null) {
+                  assistantResponse = `Awesome! Do you have a checking or savings account?`;
+                  console.log('   ✅ Fallback: Asking bank account question directly');
+                } else {
+                  assistantResponse = `Got it, thanks!`;
+                }
               }
               // Don't set shouldTransfer = true - will continue asking questions
             } else {
@@ -662,12 +801,72 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
         console.log(`Function called: ${functionName}`, functionArgs);
         
         if (functionName === 'update_qualification') {
-          // Update qualification status
-          Object.keys(functionArgs).forEach(key => {
-            if (functionArgs[key] !== undefined && functionArgs[key] !== null) {
-              state.qualifications[key] = functionArgs[key];
+          // ⭐ CRITICAL FIX: Validate prerequisites before updating qualifications
+          // Prevent setting later qualifications when earlier ones are null
+          const quals = state.qualifications;
+          let shouldBlockUpdate = false;
+          let blockedField = null;
+          let requiredPrerequisite = null;
+          
+          // Check prerequisites in order
+          if (functionArgs.age_qualified !== undefined && functionArgs.age_qualified !== null) {
+            // Can't set age_qualified if no_hospice is null
+            if (quals.no_hospice === null) {
+              shouldBlockUpdate = true;
+              blockedField = 'age_qualified';
+              requiredPrerequisite = 'no_hospice';
             }
-          });
+          }
+          
+          if (functionArgs.has_bank_account !== undefined && functionArgs.has_bank_account !== null) {
+            // Can't set has_bank_account if age_qualified is null
+            if (quals.age_qualified === null) {
+              shouldBlockUpdate = true;
+              blockedField = 'has_bank_account';
+              requiredPrerequisite = 'age_qualified';
+            }
+          }
+          
+          if (functionArgs.no_hospice !== undefined && functionArgs.no_hospice !== null) {
+            // Can't set no_hospice if no_alzheimers is null
+            if (quals.no_alzheimers === null) {
+              shouldBlockUpdate = true;
+              blockedField = 'no_hospice';
+              requiredPrerequisite = 'no_alzheimers';
+            }
+          }
+          
+          if (shouldBlockUpdate) {
+            console.warn(`⚠️  BLOCKED qualification update: Cannot set ${blockedField} because ${requiredPrerequisite} is null`);
+            console.warn(`   Current qualifications:`, state.qualifications);
+            console.warn(`   Attempted update:`, functionArgs);
+            // Don't update the blocked field - ask the prerequisite question instead
+            // Remove the blocked field from the update
+            const validUpdate = { ...functionArgs };
+            delete validUpdate[blockedField];
+            
+            // Update only valid fields
+            Object.keys(validUpdate).forEach(key => {
+              if (validUpdate[key] !== undefined && validUpdate[key] !== null) {
+                state.qualifications[key] = validUpdate[key];
+              }
+            });
+            
+            // Force asking the prerequisite question
+            const nextQuestion = this._getNextQuestion(state);
+            if (nextQuestion) {
+              assistantResponse = nextQuestion;
+              console.log(`   ✅ Forced asking prerequisite question: ${nextQuestion}`);
+            }
+          } else {
+            // All prerequisites met - update normally
+            Object.keys(functionArgs).forEach(key => {
+              if (functionArgs[key] !== undefined && functionArgs[key] !== null) {
+                state.qualifications[key] = functionArgs[key];
+              }
+            });
+          }
+          
           console.log('Updated qualifications:', state.qualifications);
           functionCallProcessed = true;
         } else if (functionName === 'set_call_outcome') {
@@ -704,7 +903,22 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
                 assistantResponse = nextQuestion;
                 console.log('   ✅ Regenerated response to ask missing qualification question');
               } else {
-                assistantResponse = `Got it, thanks!`;
+                // Fallback: Ask the first missing question directly
+                if (quals.no_alzheimers === null) {
+                  assistantResponse = `Have you ever been diagnosed with Alzheimer's or dementia?`;
+                  console.log('   ✅ Fallback: Asking Alzheimer\'s question directly');
+                } else if (quals.no_hospice === null) {
+                  assistantResponse = `Great! Are you currently in hospice care or a nursing home?`;
+                  console.log('   ✅ Fallback: Asking hospice question directly');
+                } else if (quals.age_qualified === null) {
+                  assistantResponse = `Perfect! Are you between 50 and 78?`;
+                  console.log('   ✅ Fallback: Asking age question directly');
+                } else if (quals.has_bank_account === null) {
+                  assistantResponse = `Awesome! Do you have a checking or savings account?`;
+                  console.log('   ✅ Fallback: Asking bank account question directly');
+                } else {
+                  assistantResponse = `Got it, thanks!`;
+                }
               }
               // Don't set shouldTransfer = true - will continue asking questions
             } else {
@@ -750,8 +964,8 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       const justAskedSoundGood = /sound good/i.test(lastAIText) && /get you connected|licensed agent/i.test(lastAIText);
       
       // 🔧 FIX: Detect user's response to "Sound good?" question
-      if (justAskedSoundGood && isFullyQualified && userTranscript) {
-        const transcriptLower = userTranscript.toLowerCase().trim();
+      if (justAskedSoundGood && isFullyQualified && normalizedTranscript) {
+        const transcriptLower = normalizedTranscript.toLowerCase().trim();
         const userSaidYes = /^(yes|yeah|yep|yup|yess|yea|sure|okay|ok|sounds good|sounds great|that sounds good|that sounds great|that's good|that's great)\b/i.test(transcriptLower);
         const userSaidNo = /^(no|nope|nah|naw|not yet|not right now|maybe later|not interested|i don't want|i don't need)\b/i.test(transcriptLower);
         
@@ -784,7 +998,8 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       }
 
       // Get the assistant's response
-      let assistantResponse = message.content || '';
+      // ⭐ FIX: assistantResponse was already declared above, so just update it here
+      assistantResponse = message.content || assistantResponse || '';
       
       // 🛡️ SAFETY FILTER: Remove any accidental function name mentions
       // This ensures users NEVER hear technical jargon, even if AI makes a mistake
@@ -871,9 +1086,9 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
 
       // 🛡️ FALLBACK: If tool_choice was 'required' but no function was called, manually infer the qualification
       // This is a safety net for when forced function calling still fails
-      if (toolChoice === 'required' && !functionCallProcessed && userTranscript) {
+      if (toolChoice === 'required' && !functionCallProcessed && normalizedTranscript) {
         console.log('⚠️  Function call was REQUIRED but not made - attempting manual inference');
-        const transcript = userTranscript.toLowerCase().trim();
+        const transcript = normalizedTranscript.toLowerCase().trim();
         const lastAssistantMessage = [...state.messages].reverse().find(m => m.role === 'assistant');
         const lastAssistantText = lastAssistantMessage?.content?.toLowerCase() || '';
         
@@ -1283,9 +1498,14 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       /checking|savings|bank account/i
     );
     
-    // STEP 2: Health issue discovery question
+    // ⭐ FIX: Must verify info first
+    if (quals.verified_info !== true) {
+      return null; // Can't proceed without verification
+    }
+    
+    // STEP 2: Health issue discovery question (optional)
     // Only ask if: verified_info is true AND no_alzheimers is null AND not asked yet
-    if (quals.verified_info === true && quals.no_alzheimers === null) {
+    if (quals.no_alzheimers === null) {
       if (!healthIssueAsked) {
         return `Perfect, thanks. So it looks like you had a preferred final expense offer that wasn't claimed yet. We might be able to reopen it. Was there a reason you didn't move forward last time... like maybe a health issue or something else?`;
       } else if (!alzheimersAsked) {
@@ -1294,27 +1514,30 @@ CRITICAL: Function calls happen automatically in the background. NEVER mention t
       }
     }
     
-    // STEP 3: Qualification questions
-    // Question 1: Alzheimer's
-    // Only ask if: verified_info is true AND no_alzheimers is null AND not asked yet
-    if (quals.verified_info === true && quals.no_alzheimers === null && !alzheimersAsked) {
+    // STEP 3: Qualification questions (in priority order with strict prerequisites)
+    // ⭐ CRITICAL: If a previous question is null, we MUST ask it first - don't skip ahead!
+    // Check prerequisites in order and stop at the first null question
+    
+    // Question 1: Alzheimer's - MUST be asked first if null
+    // Prerequisite: verified_info must be true (already checked above)
+    if (quals.no_alzheimers === null && !alzheimersAsked) {
       return `Have you ever been diagnosed with Alzheimer's or dementia?`;
     }
     
-    // Question 2: Hospice
-    // Only ask if: no_alzheimers is true AND no_hospice is null AND not asked yet
+    // Question 2: Hospice - Only ask if Alzheimer's is true AND hospice is null
+    // ⭐ CRITICAL: If no_alzheimers is null, we already returned above - don't check this
     if (quals.no_alzheimers === true && quals.no_hospice === null && !hospiceAsked) {
       return `Great! Are you currently in hospice care or a nursing home?`;
     }
     
-    // Question 3: Age
-    // Only ask if: no_hospice is true AND age_qualified is null AND not asked yet
+    // Question 3: Age - Only ask if Hospice is true AND age is null
+    // ⭐ CRITICAL: If no_hospice is null, we already returned above - don't check this
     if (quals.no_hospice === true && quals.age_qualified === null && !ageAsked) {
       return `Perfect! Are you between 50 and 78?`;
     }
     
-    // Question 4: Bank Account
-    // Only ask if: age_qualified is true AND has_bank_account is null AND not asked yet
+    // Question 4: Bank Account - Only ask if Age is true AND bank account is null
+    // ⭐ CRITICAL: If age_qualified is null, we already returned above - don't check this
     if (quals.age_qualified === true && quals.has_bank_account === null && !bankAccountAsked) {
       return `Awesome! Do you have a checking or savings account?`;
     }

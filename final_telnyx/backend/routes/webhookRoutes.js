@@ -198,7 +198,36 @@ async function handleCallInitiated(event) {
         toNumber = result.rows[0].to_number;      // Client phone (correct)
         console.log(`   ✅ Using numbers from telnyx_calls: ${fromNumber} -> ${toNumber}`);
       } else {
-        console.warn(`   ⚠️  Using webhook payload numbers (may be incorrect): ${fromNumber} -> ${toNumber}`);
+        // ⚠️ CRITICAL FIX: Webhook payload numbers may be reversed from network perspective
+        // Try to validate by checking which number exists in users table
+        // The to_number should be a user's phone, not a DID
+        const normalizedFrom = fromNumber.replace(/[^0-9]/g, '');
+        const normalizedTo = toNumber.replace(/[^0-9]/g, '');
+        
+        // Check if toNumber exists in users table (it should be the lead phone)
+        const userCheck = await query(
+          `SELECT id FROM users WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = $1 LIMIT 1`,
+          [normalizedTo]
+        );
+        
+        // Check if fromNumber exists in users table (it shouldn't - it's a DID)
+        const fromCheck = await query(
+          `SELECT id FROM users WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = $1 LIMIT 1`,
+          [normalizedFrom]
+        );
+        
+        // If toNumber is NOT in users but fromNumber IS, numbers are reversed
+        if (userCheck.rows.length === 0 && fromCheck.rows.length > 0) {
+          console.warn(`   ⚠️  Numbers appear reversed - swapping: ${fromNumber} <-> ${toNumber}`);
+          const temp = fromNumber;
+          fromNumber = toNumber;
+          toNumber = temp;
+          console.log(`   ✅ Corrected numbers: ${fromNumber} -> ${toNumber}`);
+        } else if (userCheck.rows.length === 0) {
+          console.warn(`   ⚠️  Using webhook payload numbers (to_number not found in users table): ${fromNumber} -> ${toNumber}`);
+        } else {
+          console.log(`   ✅ Using webhook payload numbers (validated): ${fromNumber} -> ${toNumber}`);
+        }
       }
     } catch (error) {
       console.warn(`   ⚠️  Error querying telnyx_calls: ${error.message}, using webhook payload`);
@@ -234,7 +263,11 @@ async function handleCallInitiated(event) {
   // If this is a transfer call, don't initialize conversation or AI
   if (isTransfer) {
     console.log(`🔗 Transfer call initiated - skipping conversation initialization`);
+    console.log(`   📞 Transfer call details: ${fromNumber || 'unknown'} -> ${toNumber || 'unknown'}`);
+    console.log(`   ⏱️  Transfer call start time: ${new Date().toISOString()}`);
     transferCalls.add(callControlId);
+    // Track transfer call start time for duration calculation
+    callStartTimes.set(callControlId, Date.now());
     // Still track cost for transfer calls
     costTracking.initializeCallCost(callControlId);
     return;
@@ -371,10 +404,27 @@ async function handleCallAnswered(event) {
         // Continue anyway - we'll try again when stream starts
       }
       
+      // 🔧 RACE CONDITION FIX: Check if call is still active before starting streaming
+      if (pendingHangups.has(callControlId) || transferCalls.has(callControlId)) {
+        console.log(`⚠️  Skipping streaming setup for ${callControlId}: Call ended or is transfer`);
+        return;
+      }
+      
       // STEP 2: Now tell Telnyx to start streaming (ElevenLabs Scribe is already ready)
       console.log(`🎙️  Requesting Telnyx to stream audio to: ${streamUrl}`);
-      await telnyxService.startStreaming(callControlId, streamUrl);
-      console.log(`📝 Audio streaming started: ${callControlId}`);
+      try {
+        await telnyxService.startStreaming(callControlId, streamUrl);
+        console.log(`📝 Audio streaming started: ${callControlId}`);
+      } catch (streamingError) {
+        // Check if error is because call already ended
+        if (streamingError.response?.status === 422 || 
+            streamingError.message?.includes('already ended') ||
+            streamingError.response?.data?.errors?.some(e => e.code === '90018')) {
+          console.warn(`⚠️  Call ${callControlId} ended before streaming could start - this is expected for quick hangups`);
+          return; // Don't throw - this is a race condition, not a real error
+        }
+        throw streamingError; // Re-throw if it's a different error
+      }
       
       // Mark transcription as started for accurate cost tracking
       costTracking.markTranscriptionStarted(callControlId);
@@ -513,6 +563,17 @@ async function handleCallAnswered(event) {
         
         if (userResponseCount === 0) {
           console.log(`⏰ No user responses after 1 minute - hanging up call`);
+          
+          // 🔧 RACE CONDITION FIX: Check if hangup is already pending
+          if (pendingHangups.has(callControlId)) {
+            console.log(`⏸️  Hangup already pending for ${callControlId} - skipping duplicate hangup attempt`);
+            noResponseTimers.delete(callControlId);
+            return;
+          }
+          
+          // Mark hangup as pending
+          pendingHangups.set(callControlId, { type: 'hangup', reason: 'no_response_1_minute' });
+          
           try {
             await telnyxService.hangupCall(callControlId);
             conversationService.addMessage(
@@ -1019,15 +1080,45 @@ async function handleCallHangup(event) {
     try {
       let fromNumber = event.payload.from;
       let toNumber = event.payload.to;
+      let gotNumbersFromTelnyxCalls = false;
       
-      // Try to get from telnyx_calls table
+      // Try to get from telnyx_calls table first (most reliable)
       const result = await query(
         `SELECT from_number, to_number FROM telnyx_calls WHERE call_control_id = $1`,
         [callControlId]
       );
-      if (result.rows.length > 0) {
+      if (result.rows.length > 0 && result.rows[0].from_number && result.rows[0].to_number) {
         fromNumber = result.rows[0].from_number;
         toNumber = result.rows[0].to_number;
+        gotNumbersFromTelnyxCalls = true;
+        console.log(`   ✅ Using numbers from telnyx_calls: ${fromNumber} -> ${toNumber}`);
+      } else {
+        // ⚠️ CRITICAL FIX: Validate webhook payload numbers - to_number should be a user phone, not a DID
+        const normalizedFrom = fromNumber.replace(/[^0-9]/g, '');
+        const normalizedTo = toNumber.replace(/[^0-9]/g, '');
+        
+        // Check if toNumber exists in users table (it should be the lead phone)
+        const userCheck = await query(
+          `SELECT id FROM users WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = $1 LIMIT 1`,
+          [normalizedTo]
+        );
+        
+        // Check if fromNumber exists in users table (it shouldn't - it's a DID)
+        const fromCheck = await query(
+          `SELECT id FROM users WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = $1 LIMIT 1`,
+          [normalizedFrom]
+        );
+        
+        // If toNumber is NOT in users but fromNumber IS, numbers are reversed
+        if (userCheck.rows.length === 0 && fromCheck.rows.length > 0) {
+          console.warn(`   ⚠️  Numbers appear reversed in hangup recovery - swapping: ${fromNumber} <-> ${toNumber}`);
+          const temp = fromNumber;
+          fromNumber = toNumber;
+          toNumber = temp;
+          console.log(`   ✅ Corrected numbers: ${fromNumber} -> ${toNumber}`);
+        } else if (userCheck.rows.length === 0) {
+          console.warn(`   ⚠️  Using webhook payload numbers (to_number not found in users table): ${fromNumber} -> ${toNumber}`);
+        }
       }
       
       // Initialize conversation retroactively so we can save it
@@ -1058,8 +1149,11 @@ async function handleCallHangup(event) {
         console.warn(`   ⚠️  WARNING: Transfer call ended very quickly (${transferCallDuration.toFixed(1)}s) - may indicate agent didn't answer or call failed`);
         console.warn(`   ⚠️  This could be due to:`);
         console.warn(`      - Agent not answering the call`);
+        console.warn(`      - Agent hanging up immediately after answering`);
         console.warn(`      - Transfer timeout too short`);
         console.warn(`      - Network/connection issue`);
+        console.warn(`      - Agent number may be incorrect or not accepting calls`);
+        console.warn(`   💡 Check: Is the agent number correct and available?`);
       }
     } else {
       console.log(`   ⚠️  Transfer call start time not found - cannot calculate duration`);
@@ -1069,17 +1163,24 @@ async function handleCallHangup(event) {
     // 🔧 FIX: Only finalize cost tracking for transfer calls - DO NOT save to conversation history
     // Transfer calls are temporary bridge calls - only the lead outbound call should be in conversation history
     try {
+      // ⭐ FIX: finalizeCallCost already saves to database internally, no need to call saveCallCost
       const finalCost = await costTracking.finalizeCallCost(callControlId, false);
-      console.log(`💰 Final call cost: $${finalCost.total.toFixed(4)}`);
-      console.log(`   Telnyx: $${finalCost.telnyx.toFixed(4)} (${finalCost.telnyxMinutes} min)`);
-      console.log(`   ElevenLabs: $${finalCost.elevenLabs.toFixed(4)}`);
-      console.log(`   OpenAI: $${finalCost.openai.toFixed(4)} (${finalCost.openaiCalls} calls)`);
-      await costTracking.saveCallCost(callControlId, finalCost);
-      console.log(`💾 Saved cost to database: ${callControlId}`);
+      if (finalCost) {
+        // ⭐ FIX: Use correct property names from finalizeCallCost return value
+        console.log(`💰 Final call cost: $${(finalCost.totalCost || 0).toFixed(4)}`);
+        console.log(`   Telnyx: $${(finalCost.telnyx?.total || 0).toFixed(4)} (${finalCost.telnyx?.callMinutes || 0} min)`);
+        console.log(`   ElevenLabs: $${(finalCost.elevenlabs?.total || 0).toFixed(4)}`);
+        console.log(`   OpenAI: $${(finalCost.openai?.cost || 0).toFixed(4)} (${finalCost.openai?.apiCalls || 0} calls)`);
+        // Note: finalizeCallCost already saved to database (see costTrackingService.js line 468)
+      } else {
+        console.log(`⚠️  No cost data found for transfer call: ${callControlId}`);
+      }
       // ⚠️ REMOVED: conversationService.finalizeConversation() - transfer calls should NOT be in conversation history
       console.log(`ℹ️  Transfer call - NOT saving to conversation history (only lead calls are saved)`);
     } catch (error) {
       console.error('Error finalizing transfer call cost:', error);
+      console.error('   Error details:', error.message);
+      console.error('   Stack:', error.stack);
     }
     return;
   }
@@ -3520,6 +3621,17 @@ function startNoResponseTimer(callControlId) {
           }
           
           console.log(`⏰ No response after warning - ending call`);
+          
+          // 🔧 RACE CONDITION FIX: Check if hangup is already pending or call already ended
+          if (pendingHangups.has(callControlId)) {
+            console.log(`⏸️  Hangup already pending for ${callControlId} - skipping duplicate hangup attempt`);
+            clearNoResponseTimer(callControlId);
+            return;
+          }
+          
+          // Mark hangup as pending before attempting
+          pendingHangups.set(callControlId, { type: 'hangup', reason: 'no_response_after_warning' });
+          
           try {
             await telnyxService.hangupCall(callControlId);
             conversationService.addMessage(
@@ -3650,6 +3762,46 @@ router.get('/health', (req, res) => {
     timestamp: Date.now()
   });
 });
+
+/**
+ * 🔧 RACE CONDITION FIX: Check if call is still active
+ * Used by TTS and other services to avoid operating on ended calls
+ * 
+ * @param {string} callControlId - Call control ID
+ * @returns {boolean} - True if call is still active
+ */
+function checkCallActive(callControlId) {
+  // Check if call has pending hangup
+  if (pendingHangups.has(callControlId)) {
+    return false;
+  }
+  
+  // Check if call is a transfer call (these may end quickly)
+  if (transferCalls.has(callControlId)) {
+    // Transfer calls can still be active, but we check if conversation exists
+    // If no conversation, call likely ended
+    const conversation = conversationService.activeConversations?.get?.(callControlId);
+    return !!conversation;
+  }
+  
+  // Check if conversation exists (basic check)
+  const conversation = conversationService.activeConversations?.get?.(callControlId);
+  if (!conversation) {
+    return false;
+  }
+  
+  // Check if conversation is finalized
+  if (conversationService.finalizedCalls?.has?.(callControlId)) {
+    return false;
+  }
+  
+  return true;
+}
+
+// Export helper functions for use by other services
+router.checkCallActive = checkCallActive;
+router.pendingHangups = pendingHangups;
+router.transferCalls = transferCalls;
 
 module.exports = router;
 

@@ -32,6 +32,23 @@ class BidirectionalTTSService {
   async speak(callControlId, text, options = {}) {
     const requestId = `${callControlId}_${Date.now()}`;
     
+    // 🔧 RACE CONDITION FIX: Check if call is still active before starting TTS
+    let isCallActive = true;
+    try {
+      // Dynamically require to avoid circular dependency
+      const webhookRoutes = require('../routes/webhookRoutes');
+      if (typeof webhookRoutes.checkCallActive === 'function') {
+        isCallActive = webhookRoutes.checkCallActive(callControlId);
+        if (!isCallActive) {
+          console.warn(`⚠️  Skipping TTS for ${callControlId}: Call is no longer active (ended or pending hangup)`);
+          return null;
+        }
+      }
+    } catch (e) {
+      // If checkCallActive doesn't exist yet, continue (backward compatibility)
+      console.warn(`⚠️  Could not check call state: ${e.message}`);
+    }
+    
     console.log(`🎙️  Bidirectional TTS: Speaking to ${callControlId}`);
     console.log(`   Text: "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}"`);
     console.log(`   Length: ${text.length} characters`);
@@ -62,11 +79,25 @@ class BidirectionalTTSService {
         ...options
       });
       
-      // Check if request still exists (might have been cancelled during async operation)
+      // 🔧 RACE CONDITION FIX: Check if call is still active after async ElevenLabs call
       const requestAfterTTS = this.activeSpeechRequests.get(callControlId);
       if (!requestAfterTTS) {
         console.warn(`⚠️  TTS request was cancelled for ${callControlId} during ElevenLabs call - aborting`);
         return null; // Request was cancelled, abort silently
+      }
+      
+      // Check call state again after async operation
+      try {
+        const webhookRoutes = require('../routes/webhookRoutes');
+        if (typeof webhookRoutes.checkCallActive === 'function') {
+          if (!webhookRoutes.checkCallActive(callControlId)) {
+            console.warn(`⚠️  Call ${callControlId} ended during TTS processing - aborting before audio conversion`);
+            this.activeSpeechRequests.delete(callControlId);
+            return null;
+          }
+        }
+      } catch (e) {
+        // Continue if checkCallActive doesn't exist
       }
       
       requestAfterTTS.status = 'converting';
@@ -84,11 +115,25 @@ class BidirectionalTTSService {
       // Convert MP3 to PCMU
       const pcmuBuffer = await audioConverter.convertToPCMU(mp3Stream, { streaming: false });
       
-      // Check if request still exists (might have been cancelled during conversion)
+      // 🔧 RACE CONDITION FIX: Check call state again after conversion
       const request = this.activeSpeechRequests.get(callControlId);
       if (!request) {
         console.warn(`⚠️  TTS request was cancelled for ${callControlId} during audio conversion - aborting`);
         return null; // Request was cancelled, abort silently
+      }
+      
+      // Check call state again before streaming
+      try {
+        const webhookRoutes = require('../routes/webhookRoutes');
+        if (typeof webhookRoutes.checkCallActive === 'function') {
+          if (!webhookRoutes.checkCallActive(callControlId)) {
+            console.warn(`⚠️  Call ${callControlId} ended during audio conversion - aborting before streaming`);
+            this.activeSpeechRequests.delete(callControlId);
+            return null;
+          }
+        }
+      } catch (e) {
+        // Continue if checkCallActive doesn't exist
       }
       
       request.status = 'streaming';

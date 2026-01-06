@@ -302,6 +302,51 @@ class ElevenLabsScribeService extends EventEmitter {
             
             console.log(`📝 Scribe [PARTIAL]: "${partialText}"`);
             
+            // ⭐ CRITICAL FIX: Check for voicemail keywords in partial transcripts
+            // If detected, immediately commit as final to trigger voicemail hangup
+            const transcriptLower = partialText.toLowerCase();
+            const voicemailKeywords = [
+              'voicemail', 'voice mail', 'mailbox', 'mailbox is full', 'mailbox full',
+              'leave a message', 'leave me a message', 'please leave your message',
+              'after the beep', 'at the tone', 'after the tone',
+              'record your message', 'not available', 'please leave',
+              'can i take a message', 'take a message',
+              'you\'ve reached', 'you have reached',
+              'forwarded to an automated voice messaging system', 'automated voice messaging system',
+              'voice messaging system', 'voice message system'
+            ];
+            
+            const matchedKeywords = voicemailKeywords.filter(keyword => transcriptLower.includes(keyword));
+            
+            if (matchedKeywords.length >= 1) {
+              console.log(`🤖 Voicemail detected in PARTIAL transcript!`);
+              console.log(`   Matched ${matchedKeywords.length} keyword(s): ${matchedKeywords.join(', ')}`);
+              console.log(`   Immediately committing as final to trigger voicemail hangup`);
+              
+              // Immediately emit as final transcript to trigger voicemail detection
+              this.emit('transcript', callControlId, {
+                text: partialText,
+                isFinal: true,
+                confidence: 0.9, // High confidence for voicemail detection
+                autoCommitted: true,
+                voicemailDetected: true
+              });
+              
+              // Tell ElevenLabs to commit and clear its buffer
+              this.sendCommitToElevenLabs(callControlId);
+              
+              // Clear partial buffer
+              if (connection) {
+                connection.lastAutoCommittedText = partialText;
+                connection.lastAutoCommitTime = Date.now();
+                connection.latestPartialTranscript = null;
+                connection.lastPartialTime = null;
+              }
+              
+              // Don't emit as partial - we've already emitted as final
+              return;
+            }
+            
             // Store latest partial transcript for this call
             if (connection) {
               connection.latestPartialTranscript = partialText;

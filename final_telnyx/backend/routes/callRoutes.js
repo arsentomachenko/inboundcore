@@ -7,6 +7,17 @@ const userModel = require('../models/userModel');
 // Store active calls
 const activeCalls = new Map();
 
+// 🔧 FIX: Track phone numbers that are currently being called to prevent duplicates
+// Share with agentRoutes to prevent conflicts between batch calls and single test calls
+let activePhoneNumbers;
+try {
+  const agentRoutes = require('./agentRoutes');
+  activePhoneNumbers = agentRoutes.activePhoneNumbers;
+} catch (e) {
+  // Fallback if agentRoutes not available
+  activePhoneNumbers = new Map();
+}
+
 /**
  * POST /api/calls/initiate - Initiate outbound call
  */
@@ -30,12 +41,28 @@ router.post('/initiate', async (req, res) => {
       });
     }
 
+    // 🔧 FIX: Check if this phone number is already being called to prevent duplicates
+    const normalizedPhone = user.phone.replace(/[^0-9]/g, '');
+    if (activePhoneNumbers.has(normalizedPhone)) {
+      const existingCallId = activePhoneNumbers.get(normalizedPhone);
+      console.log(`⚠️  Phone ${user.phone} is already being called (call: ${existingCallId}) - skipping duplicate call`);
+      return res.status(409).json({
+        success: false,
+        error: `Call already in progress for ${user.phone}`,
+        existingCallId
+      });
+    }
+
     // Initiate call
     const call = await telnyxService.initiateCall(
       user.phone,
       fromNumber,
       user
     );
+
+    // Track this phone number as actively being called
+    activePhoneNumbers.set(normalizedPhone, call.call_control_id);
+    console.log(`📞 Tracking active phone number: ${normalizedPhone} -> ${call.call_control_id}`);
 
     // Initialize OpenAI conversation
     openaiService.initializeConversation(call.call_control_id, user);
@@ -50,6 +77,11 @@ router.post('/initiate', async (req, res) => {
       startTime: Date.now()
     });
 
+    // 🔧 FIX: Clean up phone number tracking when call ends (via hangup endpoint or webhook)
+    // This is done in webhookRoutes.handleCallHangup, but we also need to clean up here
+    // if hangup is called directly through the API
+    const originalHangup = router.post.bind(router);
+    
     // Update user with DID number used
     await userModel.updateCallStatus(userId, 'called', {
       didNumber: fromNumber,
@@ -92,6 +124,17 @@ router.post('/hangup', async (req, res) => {
     
     // Clean up
     openaiService.endConversation(callControlId);
+    
+    // 🔧 FIX: Remove phone number from active tracking
+    const callData = activeCalls.get(callControlId);
+    if (callData && callData.toNumber) {
+      const normalizedPhone = callData.toNumber.replace(/[^0-9]/g, '');
+      if (activePhoneNumbers && activePhoneNumbers.has(normalizedPhone)) {
+        activePhoneNumbers.delete(normalizedPhone);
+        console.log(`📞 Removed phone number from active tracking: ${normalizedPhone}`);
+      }
+    }
+    
     activeCalls.delete(callControlId);
     
     // ✨ CRITICAL: Close all websockets (STT and TTS) when call hangs up
