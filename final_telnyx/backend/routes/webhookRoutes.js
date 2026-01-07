@@ -1203,6 +1203,17 @@ async function handleCallHangup(event) {
   const stage = conversationState?.stage || 'unknown';
   const messageCount = conversationState?.messages?.filter(m => m.role === 'user').length || 0;
   
+  // 🔍 CRITICAL FIX: Also check conversation service for user messages (including overlapping speech)
+  // This handles cases where user responded during AI speech - those messages are logged but not sent to OpenAI
+  // Note: conversation variable is already declared above (line 1076)
+  const hasOverlappingMessages = conversation?.messages?.some(m => 
+    m.speaker === 'Lead' && m.text && m.text.includes('[Overlapping speech - ignored]')
+  ) || false;
+  const hasUserAttemptedResponse = conversation?.userAttemptedResponse || false;
+  
+  // If user attempted to respond (even if during AI speech), consider it as a response
+  const effectiveMessageCount = messageCount > 0 ? messageCount : (hasOverlappingMessages || hasUserAttemptedResponse ? 1 : 0);
+  
   // 🔍 Check if AI was speaking when call ended
   const wasAISpeaking = speakingCalls.has(callControlId);
   const speakingInfo = speakingCalls.get(callControlId);
@@ -1225,7 +1236,7 @@ async function handleCallHangup(event) {
     console.log(`⚠️  USER HUNG UP DURING AI PROCESSING!`);
     console.log(`   Last user message was ${(timeSinceLastMessage / 1000).toFixed(1)}s ago`);
     console.log(`   AI was generating/speaking response when user hung up`);
-  } else if (wasAISpeaking && messageCount === 0 && hangupCause === 'normal_clearing') {
+  } else if (wasAISpeaking && effectiveMessageCount === 0 && hangupCause === 'normal_clearing') {
     // User hung up during AI speech before sending any message
     userHangupDetected = true;
     const speechDuration = timeSinceAISpeechStarted ? (timeSinceAISpeechStarted / 1000).toFixed(1) : 'unknown';
@@ -1242,7 +1253,7 @@ async function handleCallHangup(event) {
       : null;
     
     // Only detect as user hangup if call is very short (< 10s) or no user messages
-    if ((callDuration && callDuration < 10) || messageCount === 0) {
+    if ((callDuration && callDuration < 10) || effectiveMessageCount === 0) {
       userHangupDetected = true;
       const speechDuration = timeSinceAISpeechStarted ? (timeSinceAISpeechStarted / 1000).toFixed(1) : 'unknown';
       const durationText = callDuration ? `${callDuration}s` : 'unknown duration';
@@ -1283,13 +1294,14 @@ async function handleCallHangup(event) {
   }
   
   // 🔍 DETERMINE EXACT HANGUP REASON
+  // Use effectiveMessageCount instead of messageCount to account for overlapping speech responses
   const hangupReason = determineHangupReason({
     callControlId,
     hangupCause,
     conversation,
     conversationState,
     stage,
-    messageCount,
+    messageCount: effectiveMessageCount, // Use effective count that includes overlapping speech
     wasAISpeaking,
     wasProcessingAI,
     timeSinceAISpeechStarted,
@@ -1311,7 +1323,11 @@ async function handleCallHangup(event) {
   console.log(`📵 Call ended: ${callControlId} (${hangupCause})`);
   console.log(`   📊 Call Context:`);
   console.log(`      - Stage: ${stage}`);
-  console.log(`      - User responses: ${messageCount}`);
+  console.log(`      - User responses: ${messageCount} (OpenAI)`);
+  if (hasOverlappingMessages || hasUserAttemptedResponse) {
+    console.log(`      - User attempted to respond: ${hasOverlappingMessages ? 'overlapping messages found' : 'userAttemptedResponse flag set'}`);
+  }
+  console.log(`      - Effective responses: ${effectiveMessageCount}`);
   console.log(`      - Hangup Reason: ${hangupReason.reason}`);
   if (hangupReason.details) {
     console.log(`      - Details: ${hangupReason.details}`);
@@ -1367,7 +1383,7 @@ async function handleCallHangup(event) {
         } else {
           answerType = 'no_answer';
         }
-      } else if (messageCount === 0 && callDuration > 0 && callDuration < 30) {
+      } else if (effectiveMessageCount === 0 && callDuration > 0 && callDuration < 30) {
         // Hung up quickly (< 30s) with no user responses - almost certainly voicemail
         // This catches cases where user/voicemail hangs up before silence timer triggers
         answerType = 'voicemail';
@@ -1929,7 +1945,10 @@ async function handleTranscription(event) {
         
         // ✨ IMPORTANT: Clear no-response timer if user responds during AI speech (including warning)
         // This handles the case where user responds during the warning message
-        clearNoResponseTimer(callControlId);
+        // ⭐ CRITICAL FIX: Preserve startTimerTimeout so timer can restart after AI finishes speaking
+        // If AI is still speaking, we want the timer to start after AI finishes, not immediately
+        const isAISpeaking = speakingCalls.has(callControlId);
+        clearNoResponseTimer(callControlId, isAISpeaking);
         
         // ⭐ CRITICAL FIX: Track that user attempted to respond (even if overlapping)
         // This prevents no-response timer from hanging up when user tried to respond during AI speech
@@ -1938,6 +1957,9 @@ async function handleTranscription(event) {
           conversation.lastUserAttemptTime = Date.now(); // Track user attempt
           conversation.userAttemptedResponse = true; // Mark that user tried to respond
           console.log(`✅ User attempted to respond during AI speech - tracking attempt to prevent false hangup`);
+          if (isAISpeaking) {
+            console.log(`   ⏱️  Timer will restart after AI finishes speaking`);
+          }
         }
         
         // Silence detection removed
@@ -2817,6 +2839,22 @@ async function handleTranscription(event) {
         if (speakingCalls.has(callControlId)) {
           speakingCalls.delete(callControlId);
           console.log(`   ✅ Cleared speaking state after audio playback (${actualWaitTime.toFixed(0)}ms)`);
+        }
+        
+        // ⭐ CRITICAL FIX: Restart no-response timer after AI finishes speaking
+        // This ensures the timer works even if user responded during AI speech (which cleared the timer)
+        const conversationState = openaiService.getConversationState(callControlId);
+        if (conversationState && !transferCalls.has(callControlId) && !pendingHangups.has(callControlId)) {
+          // Check if timer was already started (might have been preserved from earlier)
+          const timerData = aiSpeechEndTimers.get(callControlId);
+          if (!timerData || !timerData.warningTimer) {
+            // Timer not active - start it now
+            console.log(`⏱️  Starting no-response timer after AI finished speaking`);
+            startNoResponseTimer(callControlId);
+          } else {
+            // Timer already active (user responded during AI speech but timer was preserved)
+            console.log(`⏱️  No-response timer already active - will continue from where it was`);
+          }
         }
       }, actualWaitTime);
       
@@ -3722,12 +3760,15 @@ function startNoResponseTimer(callControlId) {
 
 /**
  * Clear no-response timer when user responds
+ * @param {boolean} preserveStartTimer - If true, don't clear startTimerTimeout (used when user responds during AI speech)
  */
-function clearNoResponseTimer(callControlId) {
+function clearNoResponseTimer(callControlId, preserveStartTimer = false) {
   // Clear the 10-second + 5-second timer system (aiSpeechEndTimers)
   const timerData = aiSpeechEndTimers.get(callControlId);
   if (timerData) {
-    if (timerData.startTimerTimeout) {
+    // ⭐ CRITICAL FIX: If user responds during AI speech, preserve the startTimerTimeout
+    // so the timer can restart after AI finishes speaking
+    if (timerData.startTimerTimeout && !preserveStartTimer) {
       clearTimeout(timerData.startTimerTimeout);
     }
     if (timerData.warningTimer) {
@@ -3736,8 +3777,19 @@ function clearNoResponseTimer(callControlId) {
     if (timerData.hangupTimer) {
       clearTimeout(timerData.hangupTimer);
     }
-    aiSpeechEndTimers.delete(callControlId);
-    console.log(`✅ Cleared 10s+5s no-response timer for ${callControlId.slice(0, 20)}...`);
+    
+    // Only delete the timer data if we're clearing everything (not preserving startTimer)
+    // If preserving startTimer, keep the timer data structure but clear the active timers
+    if (!preserveStartTimer) {
+      aiSpeechEndTimers.delete(callControlId);
+      console.log(`✅ Cleared 10s+5s no-response timer for ${callControlId.slice(0, 20)}...`);
+    } else {
+      // Clear active timers but keep the structure for startTimerTimeout
+      timerData.warningTimer = null;
+      timerData.hangupTimer = null;
+      timerData.warningGiven = false;
+      console.log(`✅ Cleared active 10s+5s timers (preserving startTimer) for ${callControlId.slice(0, 20)}...`);
+    }
   }
   
   // ✨ CRITICAL FIX: Also clear the 60-second timer (noResponseTimers)

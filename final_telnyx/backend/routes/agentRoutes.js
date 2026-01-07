@@ -35,6 +35,10 @@ let agentConfig = {
 let callQueue = [];
 let isProcessingQueue = false;
 
+// Auto-pause/resume timer management
+let autoPauseTimer = null;
+let autoResumeCheckInterval = null;
+
 // Track transferred calls with details (now in PostgreSQL, kept for backward compatibility)
 let transferredCalls = []; // Array of { id, phone, name, address, timestamp, fromNumber, toNumber }
 
@@ -151,6 +155,87 @@ async function saveTransferredCall(callData) {
 // Load config and transferred calls on startup
 loadAgentConfig();
 loadTransferredCalls();
+
+/**
+ * Start auto-pause timer (pauses agent every 5 minutes)
+ */
+function startAutoPauseTimer() {
+  // Clear any existing timer
+  if (autoPauseTimer) {
+    clearInterval(autoPauseTimer);
+    autoPauseTimer = null;
+  }
+
+  // Set up timer to pause every 5 minutes
+  autoPauseTimer = setInterval(() => {
+    if (agentState.status === 'running') {
+      console.log(`⏸️  AUTO-PAUSING AGENT (5-minute interval reached)`);
+      agentState.status = 'paused';
+      agentState.pauseTime = Date.now();
+      console.log(`   Active calls: ${agentState.activeCalls}`);
+      
+      // Start monitoring for auto-resume
+      startAutoResumeMonitoring();
+    }
+  }, 5 * 60 * 1000); // 5 minutes in milliseconds
+
+  console.log(`⏰ Auto-pause timer started (will pause every 5 minutes)`);
+}
+
+/**
+ * Stop auto-pause timer
+ */
+function stopAutoPauseTimer() {
+  if (autoPauseTimer) {
+    clearInterval(autoPauseTimer);
+    autoPauseTimer = null;
+    console.log(`⏰ Auto-pause timer stopped`);
+  }
+}
+
+/**
+ * Start monitoring active calls for auto-resume (when < 5 active calls)
+ */
+function startAutoResumeMonitoring() {
+  // Clear any existing monitoring
+  if (autoResumeCheckInterval) {
+    clearInterval(autoResumeCheckInterval);
+    autoResumeCheckInterval = null;
+  }
+
+  // Check every 10 seconds if we should resume
+  autoResumeCheckInterval = setInterval(() => {
+    if (agentState.status === 'paused' && agentState.activeCalls < 1) {
+      console.log(`▶️  AUTO-RESUMING AGENT (Active calls: ${agentState.activeCalls} < 1)`);
+      agentState.status = 'running';
+      agentState.pauseTime = null;
+      
+      // Stop monitoring (will restart if auto-paused again)
+      stopAutoResumeMonitoring();
+      
+      // Restart auto-pause timer
+      startAutoPauseTimer();
+      
+      // Resume processing queue
+      if (!isProcessingQueue && callQueue.length > 0) {
+        processCallQueue();
+      }
+    }
+  }, 10000); // Check every 10 seconds
+
+  console.log(`👀 Auto-resume monitoring started (will resume when active calls < 1)`);
+}
+
+/**
+ * Stop auto-resume monitoring
+ */
+function stopAutoResumeMonitoring() {
+  if (autoResumeCheckInterval) {
+    clearInterval(autoResumeCheckInterval);
+    autoResumeCheckInterval = null;
+    console.log(`👀 Auto-resume monitoring stopped`);
+  }
+}
 
 /**
  * Wait for a call to complete (with timeout)
@@ -362,6 +447,9 @@ router.post('/start', async (req, res) => {
       status: 'pending'
     }));
 
+    // Start auto-pause timer
+    startAutoPauseTimer();
+
     // Start processing queue
     processCallQueue();
 
@@ -399,6 +487,10 @@ router.post('/stop', (req, res) => {
     callQueue = [];
     isProcessingQueue = false;
 
+    // Stop auto-pause timer and monitoring
+    stopAutoPauseTimer();
+    stopAutoResumeMonitoring();
+
     res.json({
       success: true,
       message: 'Agent stopped successfully',
@@ -427,6 +519,11 @@ router.post('/pause', (req, res) => {
     agentState.status = 'paused';
     agentState.pauseTime = Date.now();
 
+    // Stop auto-pause timer (user manually paused)
+    stopAutoPauseTimer();
+    // Start monitoring for auto-resume (if user wants it to resume automatically)
+    startAutoResumeMonitoring();
+
     res.json({
       success: true,
       message: 'Agent paused successfully',
@@ -454,6 +551,11 @@ router.post('/resume', (req, res) => {
 
     agentState.status = 'running';
     agentState.pauseTime = null;
+
+    // Stop auto-resume monitoring (we're resuming manually)
+    stopAutoResumeMonitoring();
+    // Restart auto-pause timer
+    startAutoPauseTimer();
 
     // Resume processing queue
     if (!isProcessingQueue && callQueue.length > 0) {

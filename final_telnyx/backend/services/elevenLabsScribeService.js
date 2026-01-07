@@ -118,7 +118,8 @@ class ElevenLabsScribeService extends EventEmitter {
           silenceCheckInterval: null,  // Interval timer for checking silence
           lastAudioTime: Date.now(),  // Timestamp of last audio received
           lastAutoCommittedText: null,  // Track last auto-committed text to prevent duplicates
-          lastAutoCommitTime: null  // Track when we last auto-committed to throttle duplicates
+          lastAutoCommitTime: null,  // Track when we last auto-committed to throttle duplicates
+          lastSendTime: 0  // Track last audio send time for throttling
         };
 
         this.activeConnections.set(callControlId, connection);
@@ -498,18 +499,39 @@ class ElevenLabsScribeService extends EventEmitter {
     connection.audioBuffer.push(audioData);
     connection.audioBufferSize += audioData.length;
     
-    // Optimized for BETTER SPEECH DETECTION: smaller initial buffer and smaller chunks
+    // ⚡ OPTIMIZED TO PREVENT QUEUE OVERFLOW: Larger chunks = fewer sends = no queue overflow
     // For µ-law @ 8kHz: 160 bytes = 20ms, 400 bytes = 50ms, 800 bytes = 100ms, 1600 bytes = 200ms
-    const INITIAL_BUFFER_SIZE = 400; // 50ms initial buffer (reduced to start sending audio faster)
-    const CHUNK_SIZE = 400; // 50ms chunks (smaller chunks = more frequent sends = better detection)
+    // Using 100ms chunks (800 bytes) balances latency and prevents queue overflow
+    // This is better than rate limiting - we batch more efficiently without artificial delays
+    const INITIAL_BUFFER_SIZE = 800; // 100ms initial buffer (good balance)
+    const CHUNK_SIZE = 800; // 100ms chunks (reduces send frequency by 2x vs 50ms, prevents overflow)
+    const MAX_BUFFER_SIZE = 8000; // 1 second max buffer (safety limit - prevents memory issues)
     
-    // Send initial 50ms buffer (reduced from 200ms to start detecting speech sooner)
+    // Safety check: if buffer grows too large, force send to prevent memory issues
+    if (connection.audioBufferSize > MAX_BUFFER_SIZE) {
+      console.warn(`⚠️  Audio buffer exceeded ${MAX_BUFFER_SIZE} bytes - forcing send to prevent memory issues`);
+      const combinedBuffer = Buffer.concat(connection.audioBuffer);
+      const chunk = combinedBuffer.slice(0, CHUNK_SIZE);
+      
+      this.sendAudioChunk(connection.ws, chunk);
+      connection.lastSendTime = Date.now();
+      connection._throttleWarned = false; // Reset throttle warning
+      
+      // Keep remainder
+      const remainder = combinedBuffer.slice(CHUNK_SIZE);
+      connection.audioBuffer = remainder.length > 0 ? [remainder] : [];
+      connection.audioBufferSize = remainder.length;
+      return;
+    }
+    
+    // Send initial 100ms buffer
     if (!connection.initialBufferSent && connection.audioBufferSize >= INITIAL_BUFFER_SIZE) {
       const combinedBuffer = Buffer.concat(connection.audioBuffer);
       const initialChunk = combinedBuffer.slice(0, INITIAL_BUFFER_SIZE);
       
-      console.log(`🎯 Sending INITIAL 50ms audio buffer (${initialChunk.length} bytes) - optimized for better speech detection`);
+      console.log(`🎯 Sending INITIAL 100ms audio buffer (${initialChunk.length} bytes) - optimized to prevent queue overflow`);
       this.sendAudioChunk(connection.ws, initialChunk);
+      connection.lastSendTime = Date.now();
       
       // Keep remainder
       const remainder = combinedBuffer.slice(INITIAL_BUFFER_SIZE);
@@ -517,17 +539,38 @@ class ElevenLabsScribeService extends EventEmitter {
       connection.audioBufferSize = remainder.length;
       connection.initialBufferSent = true;
     }
-    // After initial buffer, send in 50ms chunks (more frequent = better detection)
+    // After initial buffer, send in 100ms chunks with intelligent throttling
     else if (connection.initialBufferSent && connection.audioBufferSize >= CHUNK_SIZE) {
-      const combinedBuffer = Buffer.concat(connection.audioBuffer);
-      const chunk = combinedBuffer.slice(0, CHUNK_SIZE);
+      const now = Date.now();
+      const timeSinceLastSend = now - connection.lastSendTime;
       
-      this.sendAudioChunk(connection.ws, chunk);
+      // ⚡ SMART THROTTLING: Only throttle if sending too fast (prevents overflow)
+      // Minimum 80ms between sends (allows up to 12.5 sends/sec, well below queue limit)
+      // This prevents queue overflow while maintaining low latency
+      const MIN_SEND_INTERVAL_MS = 80; // 80ms = max 12.5 sends/sec (safe for ElevenLabs)
       
-      // Keep remainder
-      const remainder = combinedBuffer.slice(CHUNK_SIZE);
-      connection.audioBuffer = remainder.length > 0 ? [remainder] : [];
-      connection.audioBufferSize = remainder.length;
+      if (timeSinceLastSend >= MIN_SEND_INTERVAL_MS) {
+        // Safe to send - enough time has passed
+        const combinedBuffer = Buffer.concat(connection.audioBuffer);
+        const chunk = combinedBuffer.slice(0, CHUNK_SIZE);
+        
+        this.sendAudioChunk(connection.ws, chunk);
+        connection.lastSendTime = now;
+        connection._throttleWarned = false; // Reset throttle warning on successful send
+        
+        // Keep remainder
+        const remainder = combinedBuffer.slice(CHUNK_SIZE);
+        connection.audioBuffer = remainder.length > 0 ? [remainder] : [];
+        connection.audioBufferSize = remainder.length;
+      } else {
+        // Throttling: buffer is growing, but we need to wait a bit
+        // This is rare - only happens if audio arrives in bursts
+        // Buffer will continue accumulating, we'll send when safe
+        if (!connection._throttleWarned) {
+          console.log(`⏸️  Throttling send (${timeSinceLastSend}ms since last, need ${MIN_SEND_INTERVAL_MS}ms) - buffer: ${connection.audioBufferSize} bytes`);
+          connection._throttleWarned = true;
+        }
+      }
     }
   }
 

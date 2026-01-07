@@ -256,18 +256,42 @@ class ConversationService {
         const hasRealUserMessagesInOpenAI = conversationState?.messages?.some(m => 
           m.role === 'user' && !m.content?.includes('[Voicemail detected]')
         ) || false;
-        const hasUserMessages = hasRealUserMessagesInConversation || hasRealUserMessagesInOpenAI;
         
         // Check if all Lead messages are voicemail/background noise (no real user response)
         const allLeadMessagesAreVoicemail = conversation.messages
           .filter(m => m.speaker === 'Lead')
           .every(m => m.text.includes('[Voicemail detected]') || m.text.includes('[Background noise]') || m.text.includes('[Filtered:'));
         
-        if (hasUserMessages && !allLeadMessagesAreVoicemail) {
+        // 🔍 CRITICAL FIX: Check if user attempted to respond (even if during AI speech)
+        // This handles cases where user tried to respond but transcription was ignored due to overlapping speech
+        // Only consider this if there are no voicemail indicators
+        const userAttemptedResponse = conversation.userAttemptedResponse || false;
+        const hasUserMessages = hasRealUserMessagesInConversation || hasRealUserMessagesInOpenAI;
+        
+        // 🔍 CRITICAL FIX: Check OpenAI API calls FIRST - this is the strongest indicator that user responded
+        // OpenAI API calls mean user definitely responded, regardless of message tracking
+        const hasOpenAICalls = costData?.openai?.apiCalls > 0;
+        const openAICallCount = costData?.openai?.apiCalls || 0;
+        
+        if (hasOpenAICalls && openAICallCount > 0) {
+          // OpenAI was called = user definitely responded
+          conversation.status = 'completed';
+          console.log(`   ✅ OpenAI API calls detected (${openAICallCount}) - marking as completed (user responded)`);
+        } else if (hasUserMessages && !allLeadMessagesAreVoicemail) {
           // Had real user responses - completed conversation
           conversation.status = 'completed';
           if (hasRealUserMessagesInOpenAI && !hasRealUserMessagesInConversation) {
             console.log(`   ⚠️  User messages found in OpenAI state but not in conversation service - marking as completed`);
+          }
+        } else if (userAttemptedResponse && !allLeadMessagesAreVoicemail) {
+          // User attempted to respond but message wasn't captured (likely filtered during AI speech)
+          if (conversation.duration > 30) {
+            // Long call with user attempt - likely a real response that was missed
+            conversation.status = 'completed';
+            console.log(`   ⚠️  User attempted to respond (userAttemptedResponse flag) in long call (${conversation.duration}s) - marking as completed`);
+          } else {
+            // Short call with user attempt but no confirmation - likely just background noise or false positive
+            conversation.status = 'no_response';
           }
         } else {
           // AI spoke but no real user response - likely voicemail or hangup
@@ -298,7 +322,31 @@ class ConversationService {
             conversation.status = 'voicemail';
             console.log(`   ✅ All Lead messages are voicemail/system - marking as voicemail`);
           } else {
-            conversation.status = 'no_response';
+            // 🔍 CRITICAL FIX: Before marking as no_response, check for additional indicators
+            // Check if call had significant duration and TTS (might be race condition)
+            const hasTTSCost = costData?.telnyx?.ttsCost > 0 || costData?.elevenlabs?.ttsCost > 0;
+            const hasSignificantDuration = conversation.duration > 15;
+            
+            if (hasSignificantDuration && hasTTSCost) {
+              // Long call with TTS but no messages - might be race condition
+              // Check OpenAI state more carefully for user messages
+              const conversationState = openaiService.getConversationState(callControlId);
+              const hasUserInOpenAI = conversationState?.messages?.some(m => 
+                m.role === 'user' && !m.content?.includes('[Voicemail detected]')
+              ) || false;
+              
+              if (hasUserInOpenAI) {
+                conversation.status = 'completed';
+                console.log(`   ⚠️  Long call (${conversation.duration}s) with TTS and user messages in OpenAI state - marking as completed`);
+              } else {
+                // Long call but no user messages found - likely true no_response
+                conversation.status = 'no_response';
+                console.log(`   ✅ Long call (${conversation.duration}s) but no user messages - marking as no_response`);
+              }
+            } else {
+              // Short call or no TTS - likely true no_response
+              conversation.status = 'no_response';
+            }
           }
         }
       }
